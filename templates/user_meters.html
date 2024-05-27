@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block extra_css %}
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='UserList.css')}}">
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='MediaQueries.css')}}">
+
+{% endblock extra_css %}
+
+{% block content %}
+<h1>Twoje liczniki</h1>
+<ul class="user-list">
+    {% for meter in user_meters %}
+    <li class="user-item">
+        <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}">
+            Meter Number: {{ meter.radio_number }} | Name: {{ meter.name }} | Type: {{ meter.type }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

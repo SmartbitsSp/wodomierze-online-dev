@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block extra_css %}
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='ButtonsAndForms.css')}}">
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='MediaQueries.css')}}">
+
+{% endblock extra_css %}
+
+
+{% block content %}
+    <a href="{{ url_for('main_routes.home') }} " class="btn btn-secondary no-print">Powrót</a>
+  <h1>Edytuj profil</h1>
+    <h3>Użytkownik: {{ user_email }}</h3>
+  <form method="POST" action="{{ url_for('main_routes.edit_account') }}" style="width: 400px">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.current_password.label }}
+      {{ form.current_password(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.new_password.label }}
+      {{ form.new_password(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.confirm_password.label }}
+      {{ form.confirm_password(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.submit(class="btn btn-primary") }}
+    </div>
+  </form>
+{% endblock %}

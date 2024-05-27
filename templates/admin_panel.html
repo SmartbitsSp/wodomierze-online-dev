@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='UserList.css')}}">
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='Emitel.css')}}">
+
+{% endblock extra_css %}
+
+{% block content %}
+    <h2>Panel Administratora</h2>
+    <div class="content-box">
+
+
+    <div class="left-box" style="width: 25%">
+<h3>Dodaj użytkownika</h3>
+    <div><button id="showUserForm" class="btn btn-primary" style="display: flex ">Pokaż formularz</button>
+        <button id="hideUserForm" class="btn btn-secondary" style="display: none">Schowaj formularz</button>
+        <button id="showMultipleUsersForm" class="btn btn-primary" style="display: flex" >Dodaj wielu użytkowników</button>
+        <button id="hideMultipleUsersForm" class="btn btn-secondary" style="display: none">Schowaj formularz</button>
+
+    </div>
+       <!-- Widok użytkowników -->
+<button class="btn btn-link d-block d-lg-none toggle-button" type="button" data-toggle="collapse" data-target="#userListCollapse" aria-expanded="false" aria-controls="userListCollapse">
+    <h3>Lista użytkowników <span class="toggle-icon">&#9660;</span></h3>
+    </button>
+    <h3 class="d-none d-lg-block">Lista użytkowników</h3>
+    <div class="collapse"  id="userListCollapse">
+  <input type="text" id="search-user-input" style="width: 320px" placeholder="Wyszukaj użytkownika" class="search-bar">
+<ul class="user-list limited-list" style="width: 320px" id="user-list">
+    {% for user in users %}
+        <li class="user-item">
+            <a href="{{ url_for('main_routes.user_overview', user_id=user.id) }}">{{ user.email }}</a>
+        </li>
+    {% endfor %}
+</ul>
+    </div>
+
+
+<button class="btn btn-link d-block d-lg-none toggle-button" type="button" data-toggle="collapse" data-target="#meterListCollapse" aria-expanded="false" aria-controls="meterListCollapse">
+
+    <h3>Lista liczników <span class="toggle-icon">&#9660;</span></h3>
+</button>
+    <h3 class="d-none d-lg-block">Lista liczników</h3>
+    <form id="delete-meters-form" method="post" action="{{ url_for('admin_routes.delete_selected_meters') }}">
+    <div class="collapse" id="meterListCollapse">
+    <input type="text" id="search-meter-input" style="width: 320px" placeholder="Wyszukaj według numeru radiowego" >
+    <ul class="user-list limited-list" style="width: 320px"  id="meter-list">
+        {% for meter in meters %}
+            <li class="meter-item">
+             <input type="checkbox" name="selected_meters" value="{{ meter.id }}" class="meter-checkbox">
+                <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}"> {{ meter.radio_number }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    </div>
+     <button type="submit" id="delete-selected" class="btn btn-danger" style="display: none;">Usuń wybrane liczniki</button>
+    </form>
+   <!--- <form action="{{ url_for('admin_routes.remove_duplicates') }}" method="post">
+    <button type="submit" class="btn btn-danger">Usuń duplikaty odczytów</button>
+</form>
+
+    <button id="emitel-odczyty-btn" class="btn emitel-yellow-btn">Emitel odczyty</button>
+
+<div id="emitel-days-buttons" class="hidden">
+    <button class="btn emitel-blue-btn" data-days="2">2 dni</button>
+    <button class="btn emitel-blue-btn" data-days="3">3 dni</button>
+    <button class="btn emitel-blue-btn" data-days="4">4 dni</button>
+    <button class="btn emitel-blue-btn" data-days="5">5 dni</button>
+</div>
+<div id="emitel-result"></div>
+<button id="send-meters-count-btn" class="btn btn-primary">Wyślij ilość liczników</button>
+
+
+<form method="POST" action="{{ url_for('main_routes.delete_meters') }}">
+    <button type="submit" class="btn btn-danger hidden">Usuń wszystkie mierniki i odczyty</button>
+</form>--->
+   </div>
+
+<div class="right-box user-overview-container">
+
+<form id="userForm" method="POST" action="{{ url_for('main_routes.add_user') }}" style="display: none;max-width: 400px"><h3>Dodaj użytkownika</h3>
+
+    {{ user_form.hidden_tag() }}
+    <div class="form-group">
+        {{ user_form.email.label(class="form-label") }}
+        {{ user_form.email(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ user_form.password.label(class="form-label") }}
+        {{ user_form.password(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ user_form.confirm_password.label(class="form-label") }}
+        {{ user_form.confirm_password(class="form-control") }}
+    </div>
+    <div class="form-check">
+        {{ user_form.is_admin(class="form-check-input") }}
+        {{ user_form.is_admin.label(class="form-check-label") }}
+    </div>
+    <div class="form-check">
+        {{ user_form.is_superuser(class="form-check-input") }}
+        {{ user_form.is_superuser.label(class="form-check-label") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Dodaj</button>
+</form>
+
+<form id="multipleUsersForm" method="POST" action="{{ url_for('main_routes.add_multiple_users') }}" style="display: none; max-width: 400px">
+    <h3>Dodaj wielu użytkowników</h3>
+    <textarea name="emails" class="form-control" rows="5" placeholder="Wprowadź adresy e-mail oddzielone spacjami, enterami, przecinkami lub średnikami"></textarea>
+    <button type="submit" class="btn btn-primary">Dodaj</button>
+</form>
+
+    {% block user %}
+
+    {% endblock user %}
+</div>
+</div>
+
+<script>
+document.getElementById('send-meters-count-btn').addEventListener('click', function() {
+    fetch('/admin/send-meters-count', {
+        method: 'POST',
+        // Dodaj nagłówki lub ciało żądania, jeśli jest to konieczne
+    }).then(response => {
+        if (response.ok) {
+            alert('E-mail został wysłany.');
+        } else {
+            alert('Wystąpił błąd podczas wysyłania e-maila.');
+        }
+        return response.json();
+    }).then(data => {
+        console.log(data); // Opcjonalnie, obsłuż dane zwrotne
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+});
+</script>
+
+    <script>
+document.getElementById('emitel-odczyty-btn').addEventListener('click', function() {
+    var daysButtons = document.getElementById('emitel-days-buttons');
+    daysButtons.classList.toggle('hidden'); // Pokaż lub ukryj przyciski dni
+});
+
+// Dodajemy nasłuchiwanie na przyciski dni
+document.querySelectorAll('.emitel-blue-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const daysBack = this.getAttribute('data-days');
+        fetchEmitelReadings(daysBack);
+    });
+});
+
+function fetchEmitelReadings(daysBack) {
+    // Przygotuj dane jako ciąg zapytania
+    const data = `days_back=${encodeURIComponent(daysBack)}`;
+
+    fetch('/admin/emitel-readings', {
+        method: 'POST',
+        body: data,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded', // Ustaw właściwy typ zawartości
+        },
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById('emitel-result').textContent = data.message;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('emitel-result').textContent = 'Wystąpił błąd: ' + error.message;
+    });
+}
+
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.meter-checkbox');
+    const deleteButton = document.getElementById('delete-selected');
+
+    function updateDeleteButtonVisibility() {
+        const anyChecked = Array.from(checkboxes).some(c => c.checked);
+        deleteButton.style.display = anyChecked ? 'block' : 'none';
+    }
+
+    checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', updateDeleteButtonVisibility);
+    });
+});
+</script>
+    <script>
+
+        const searchMeterInput = document.getElementById('search-meter-input');
+        const meterList = document.getElementById('meter-list');
+
+        searchMeterInput.addEventListener('input', function() {
+            const searchTerm = searchMeterInput.value.toLowerCase();
+            const meterItems = meterList.querySelectorAll('.meter-item');
+
+            meterItems.forEach(function(item) {
+                const meterNumber = item.textContent.trim().toLowerCase();
+                if (meterNumber.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    </script>
+
+   <script>
+
+   document.getElementById("showMultipleUsersForm").addEventListener("click", function () {
+    document.getElementById("multipleUsersForm").style.display = "block";
+    this.style.display = "none";
+});
+
+        const showUserFormBtn = document.getElementById("showUserForm");
+        const hideUserFormBtn = document.getElementById("hideUserForm");
+        const userForm = document.getElementById("userForm");
+        const  showMultipleUsersFormBtn =document.getElementById("showMultipleUsersForm");
+        const  hideMultipleUsersFormBtn =document.getElementById("hideMultipleUsersForm");
+        const multipleUsersForm = document.getElementById("multipleUsersForm")
+
+        showUserFormBtn.addEventListener("click", function () {
+            userForm.style.display = "block";
+            this.style.display = "none";
+            hideUserFormBtn.style.display = "block";
+        });
+
+        hideUserFormBtn.addEventListener("click", function () {
+            userForm.style.display = "none";
+            this.style.display = "none";
+            showUserFormBtn.style.display = "block";
+        });
+
+        showMultipleUsersFormBtn.addEventListener("click", function () {
+            multipleUsersForm.style.display = "block";
+            this.style.display = "none";
+            hideMultipleUsersFormBtn.style.display = "block";
+});
+
+        hideMultipleUsersFormBtn.addEventListener("click", function () {
+            multipleUsersForm.style.display = "none";
+            this.style.display = "none";
+            showMultipleUsersFormBtn.style.display = "block";
+        });
+    </script>
+
+    <script>
+    const searchUserInput = document.getElementById('search-user-input');
+    const userList = document.getElementById('user-list');
+
+    searchUserInput.addEventListener('input', function() {
+        const searchTerm = searchUserInput.value.toLowerCase();
+        const userItems = userList.querySelectorAll('.user-item');
+
+        userItems.forEach(function(item) {
+            const userEmail = item.textContent.trim().toLowerCase();
+            if (userEmail.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+
+    document.querySelectorAll('.toggle-button').forEach(function(button) {
+    button.addEventListener('click', function() {
+        var icon = this.querySelector('.toggle-icon');
+        if (icon.textContent === '\u25BC') { // Strzałka w dół
+            icon.textContent = '\u25B2'; // Zmień na strzałkę w górę
+        } else {
+            icon.textContent = '\u25BC'; // Zmień na strzałkę w dół
+        }
+    });
+});
+
+</script>
+
+{% endblock %}

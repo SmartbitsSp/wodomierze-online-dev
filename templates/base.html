@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <title>Zdalny Odczyt</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1" />
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='GeneralStyles.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='Layout.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='ButtonsAndForms.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='MediaQueries.css')}}">
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    {% block extra_css %}
+
+    {% endblock extra_css %}
+
+</head>
+
+
+<body>
+<script>
+function adjustMargin() {
+    var navbarHeight = document.querySelector('.navbar').offsetHeight;
+    var centerBox = document.querySelector('.center-box');
+    centerBox.style.marginTop = navbarHeight + 'px';
+}
+
+// Wywołaj funkcję przy ładowaniu strony
+window.onload = adjustMargin;
+
+// Wywołaj funkcję przy zmianie rozmiaru okna
+window.onresize = adjustMargin;
+</script>
+
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{{ url_for('main_routes.home') }}"><img src="{{ url_for('static', filename='img/Zdalny_Odczyt_RGB.png') }}" alt="Logo" class="logo">
+        </a>
+    {% if current_user.is_authenticated %}
+    <p class="navbar-brand">Witaj, {{ current_user.email.split('@')[0] }}!</p>
+    {% endif %}
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('main_routes.home') }}">  <span class="sr-only">(current)</span></a>
+                </li>
+
+            </ul>
+            <div class="form-inline my-2 my-lg-0">
+                {% if current_user.is_authenticated %}
+                {% if current_user.is_admin %}
+                <p><a href="{{ url_for('admin_routes.upload_csv') }} " class="btn btn-warning">Prześlij plik</a></p>
+                    <p><a href="{{ url_for('main_routes.generate_report') }} " class="btn btn-warning">Generuj raport</a></p>
+                    <p><a href="{{ url_for('admin_routes.admin_panel') }} " class="btn btn-warning">Panel Administratora</a></p>
+                    <p><a href="{{ url_for('main_routes.messages') }}" class="btn btn-warning">Wyślij wiadodmość</a></p>
+                {% endif %}
+                 {% if current_user.is_superuser %}
+                     <p><a href="{{ url_for('main_routes.superuser_panel') }} " class="btn btn-warning">Panel Zarządzania</a></p>
+                     <p><a href="{{ url_for('main_routes.generate_report') }} " class="btn btn-warning">Generuj raport</a></p>
+                 {% endif %}
+                <p class="navbar-brand">     </p>
+
+                    {% if not current_user.is_admin %}
+                    <p><a href="{{ url_for('main_routes.messages') }} " class="btn btn-warning">Wiadomości
+                    {% if current_user.unread_messages > 0 %}
+      <span class="badge badge-danger">{{ current_user.unread_messages }}</span>
+    {% endif %}
+                    {% endif %}
+                    </a></p>
+                    <p><a href="{{ url_for('main_routes.edit_account') }}" class="btn btn-warning">Edytuj profil</a></p>
+                    <p><a href="{{ url_for('main_routes.logout') }} " class="btn btn-warning">Wyloguj</a></p>
+                {% else %}
+
+                    <a href="{{ url_for('main_routes.login') }}" class="btn btn-warning">Login</a>
+                {% endif %}
+
+
+            </div>
+        </div>
+
+
+
+
+</nav>
+
+<div class="center-box">
+{% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+            {{ message }}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+    <br>
+    {% block content %}
+
+
+    {% endblock content %}
+</div>
+
+
+
+<footer class="footer no-print">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h3 style="color: #f9f9f9">Kontakt</h3>
+                <p style="color: #f9f9f9">Telefon: 608 25 88 77</p>
+                <p style="color: #f9f9f9">Nawiąż współpracę: mw@zdalnyodczyt.com</p>
+                <p style="color: #f9f9f9">Wsparcie techniczne: wojciech.adamski@smartbits.pl</p>
+            </div>
+            <div class="col-md-6">
+                <h3 style="color: #f9f9f9">Linki</h3>
+                <ul>
+                    <li style="color: #f9f9f9"><a href="#" style="color: #f9f9f9">Polityka prywatności</a></li>
+                    <li style="color: #f9f9f9"><a href="#" style="color: #f9f9f9">Warunki użytkowania</a></li>
+                    <li style="color: #f9f9f9"><a href="#" style="color: #f9f9f9">Regulamin</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <center style="color: #f9f9f9"> <a href="https://linkedin.com/in/wojciech-adamski-b1a3b1a9/ " class="signature" target="_blank"> Wojciech Adamski</a>   2024</center>
+</footer>
+
+
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+
+
+</body>
+</html>
+
