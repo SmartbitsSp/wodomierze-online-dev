@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'zdalnyodczytdev'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_4B966824E51F41538D11D18A424FACD3 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_4C5E6AA56F5243579E253D77BC1227DC }}
