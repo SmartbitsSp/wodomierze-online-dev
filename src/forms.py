@@ -115,4 +115,5 @@ class EditUserForm(FlaskForm):
     confirm_password = PasswordField('Potwierdź hasło', validators=[EqualTo('password')])  # Usunięto DataRequired
     report_months = SelectMultipleField('Miesiące raportowania', choices=[(str(i), MONTHS_PL[i]) for i in range(1, 13)],
                                         coerce=int)
+    can_toggle_view = BooleanField('Może przełączać widok na deltę')
     submit = SubmitField('Zaktualizuj')

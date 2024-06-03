@@ -13,7 +13,8 @@ from src.forms import LoginForm, MeterForm, UploadForm, UserForm, EditAccountFor
 from src.models import User, db, Meter, MeterReading, get_all_users, Message, Address, MeterEditHistory, UserReportMonth
 import os
 from src.utils import process_csv_water, process_csv_heat, admin_required, is_valid_link, process_csv_events, \
-    superuser_required, create_report_data, generate_random_password, remove_duplicate_readings
+    superuser_required, create_report_data, generate_random_password, remove_duplicate_readings, \
+    create_deltas_report_data
 
 main_routes = Blueprint('main_routes', __name__)
 admin_routes = Blueprint('admin_routes', __name__)
@@ -951,6 +952,70 @@ def remove_duplicates():
     total_removed_duplicates = remove_duplicate_readings()
     flash(f'Usunięto {total_removed_duplicates} duplikatów odczytów.', 'success')
     return redirect(url_for('admin_routes.admin_panel'))
+
+
+@main_routes.route('/generate_deltas_report', methods=['GET', 'POST'])
+@superuser_required
+def generate_deltas_report():
+    if request.method == 'POST':
+        selected_meters = request.form.getlist('selected_meters')
+        report_period = int(request.form.get('report_period'))
+
+        report_data = create_deltas_report_data(selected_meters, report_period)
+        session['deltas_report_data'] = report_data  # Zapisz dane do sesji
+        session['report_period'] = report_period
+        return redirect(url_for('main_routes.display_deltas_report'))
+
+    if current_user.is_admin:
+        users = User.query.all()
+    else:
+        users = User.query.filter_by(superuser_id=current_user.id).all()
+    return render_template('generate_deltas_report.html', users=users)
+
+@main_routes.route('/display_deltas_report')
+@superuser_required
+def display_deltas_report():
+    report_data = session.get('deltas_report_data', [])
+    report_period = session.get('report_period', 0)
+    end_date = datetime.now().replace(day=1) - relativedelta(days=1)
+    report_end_date = datetime.now()
+    report_start_date = report_end_date - relativedelta(months=report_period)
+    unique_emails = set(data['user_email'] for data in report_data)
+
+    english_to_polish_months = {
+        'January': 'Styczeń',
+        'February': 'Luty',
+        'March': 'Marzec',
+        'April': 'Kwiecień',
+        'May': 'Maj',
+        'June': 'Czerwiec',
+        'July': 'Lipiec',
+        'August': 'Sierpień',
+        'September': 'Wrzesień',
+        'October': 'Październik',
+        'November': 'Listopad',
+        'December': 'Grudzień'
+    }
+    for data_entry in report_data:
+        for month in range(report_period):
+            month_name = (end_date - relativedelta(months=month)).strftime('%B %Y')
+            month_name_split = month_name.split()
+            polish_month_name = english_to_polish_months.get(month_name_split[0], month_name_split[0]) + ' ' + \
+                                month_name_split[1]
+            if month_name in data_entry:
+                data_entry[polish_month_name] = data_entry.pop(month_name)
+
+    translated_month_names = [(end_date - relativedelta(months=month)).strftime('%B %Y') for month in
+                              range(report_period)]
+    translated_month_names = [english_to_polish_months.get(month.split()[0], month.split()[0]) + ' ' + month.split()[1]
+                              for month in translated_month_names]
+
+    return render_template('display_deltas_report.html', report_data=report_data,
+                           translated_month_names=translated_month_names, report_period=report_period,
+                           end_date=end_date, relativedelta=relativedelta,
+                           report_start_date=report_start_date.strftime('%Y-%m-%d'),
+                           report_end_date=report_end_date.strftime('%Y-%m-%d'), unique_emails=unique_emails)
+
 
 # @admin_routes.route('/emitel-readings', methods=['POST'])
 # @admin_required  # Upewnij się, że ta trasa jest dostępna tylko dla administratorów

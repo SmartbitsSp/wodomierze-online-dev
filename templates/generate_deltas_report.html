@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Generuj raport delty</h2>
+<form method="POST">
+    <div class="form-group">
+        <label for="selected_meters">Wybierz liczniki:</label>
+        <select multiple class="form-control" id="selected_meters" name="selected_meters">
+            {% for user in users %}
+                {% for meter in user.meters %}
+                    <option value="{{ meter.radio_number }}">{{ meter.radio_number }} - {{ user.email }}</option>
+                {% endfor %}
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="report_period">Okres raportu (w miesiącach):</label>
+        <input type="number" class="form-control" id="report_period" name="report_period" min="1" value="12">
+    </div>
+    <button type="submit" class="btn btn-primary">Generuj raport</button>
+</form>
+{% endblock %}

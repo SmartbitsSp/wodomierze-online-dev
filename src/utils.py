@@ -2,6 +2,8 @@ import calendar
 import csv
 import os
 import random
+from decimal import Decimal
+from itertools import tee, chain, islice
 
 import chardet as chardet
 from dateutil.relativedelta import relativedelta
@@ -382,6 +384,78 @@ def create_report_data(selected_meters, user_months, report_period):
                         meter_data[month_name] = ' '
                 else:
                     meter_data[month_name] = ' '  # Jeśli użytkownik nie ma dostępu
+
+            report_data.append(meter_data)
+
+    return report_data
+
+def previous_and_next(some_iterable):
+    prevs, items, nexts = tee(some_iterable, 3)
+    prevs = chain([None], prevs)
+    nexts = chain(islice(nexts, 1, None), [None])
+    return zip(prevs, items, nexts)
+
+def create_deltas_report_data(selected_meters, report_period):
+    end_date = datetime.now().replace(day=1) - relativedelta(days=1)
+    start_date = end_date - relativedelta(months=report_period+1)
+
+    report_data = []
+    for meter_radio_number in selected_meters:
+        meter = Meter.query.filter_by(radio_number=meter_radio_number).first()
+        if meter:
+            # Tworzenie reprezentacji adresu jako ciągu znaków
+            if meter.address:
+                address_parts = [
+                    meter.address.street,
+                    meter.address.building_number,
+                    meter.address.apartment_number
+                ]
+                address_str = '/ '.join(filter(None, address_parts))
+            else:
+                address_str = ' '
+
+            if meter.type == 'water':
+                meter_type = 'wodomierz'
+            else:
+                meter_type = meter.type
+
+            if meter.device_number:
+                device_number = meter.device_number
+            else:
+                device_number = 'N/A'
+
+            meter_data = {
+                'user_email': meter.user.email if meter.user else 'N/A',
+                'meter_number': meter.radio_number,
+                'device_number': device_number,
+                'meter_type': meter_type,
+                'meter_address': address_str,  # Użyj utworzonego ciągu adresu
+            }
+
+            # Pobierz wszystkie odczyty
+            readings = MeterReading.query.filter(
+                MeterReading.meter_id == meter.id,
+                MeterReading.date >= start_date,
+                MeterReading.date <= end_date
+            ).order_by(MeterReading.date).all()
+
+            previous_reading = readings[-2].reading
+            for month in range(report_period):
+                month_date = end_date - relativedelta(months=month)
+                month_name = month_date.strftime('%B %Y')
+                meter_data[month_name] = ''
+
+                for prev, reading, nxt in previous_and_next(readings):
+                    if reading.date.year == month_date.year and reading.date.month == month_date.month:
+                        if prev:
+                            meter_data[month_name] =round(Decimal(reading.reading - prev.reading), 3)
+                            print(reading.reading, prev.reading, month_name, meter_data[month_name])
+                        else:
+                            meter_data[month_name] = 0
+                            print(reading.reading, prev, month_name, meter_data[month_name])
+
+                        previous_reading = reading.reading
+                        break
 
             report_data.append(meter_data)
 
