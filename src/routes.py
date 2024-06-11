@@ -1,5 +1,7 @@
 import calendar
+import json
 import random
+import uuid
 from datetime import datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
@@ -20,7 +22,7 @@ main_routes = Blueprint('main_routes', __name__)
 admin_routes = Blueprint('admin_routes', __name__)
 superuser_routes = Blueprint('superuser_routes', __name__)
 user_routes = Blueprint('user_routes', __name__)
-
+REPORTS_DIR = 'reports'
 
 @main_routes.route('/')
 def welcome():
@@ -761,7 +763,15 @@ def generate_report():
             user_months = {user.id: [ur.month for ur in user.report_months] for user in users}
 
         report_data = create_report_data(selected_meters, user_months, report_period)
-        session['report_data'] = report_data  # Zapisz dane do sesji
+        report_id = str(uuid.uuid4())
+
+        if not os.path.exists(REPORTS_DIR):
+            os.makedirs(REPORTS_DIR)
+
+        with open(os.path.join(REPORTS_DIR, f'{report_id}.json'), 'w') as f:
+            json.dump(report_data, f)
+
+        session['report_id'] = report_id  # Zapisz dane do sesji
         session['report_period'] = report_period
         return redirect(url_for('main_routes.display_report'))
 
@@ -775,11 +785,24 @@ def generate_report():
 @main_routes.route('/display_report')
 @superuser_required
 def display_report():
-    report_data = session.get('report_data', [])
+    report_id = session.get('report_id')
     report_period = session.get('report_period', 0)
     end_date = datetime.now().replace(day=1) - relativedelta(days=1)
     report_end_date = datetime.now()
     report_start_date = report_end_date - relativedelta(months=report_period)
+
+    if not report_id:
+        flash('Brak danych raportu.', 'danger')
+        return redirect(url_for('main_routes.generate_report'))
+
+    report_file = os.path.join(REPORTS_DIR, f'{report_id}.json')
+    if not os.path.exists(report_file):
+        flash('Nie znaleziono pliku raportu.', 'danger')
+        return redirect(url_for('main_routes.generate_report'))
+
+    with open(report_file, 'r') as f:
+        report_data = json.load(f)
+
     unique_emails = set(data['user_email'] for data in report_data)
 
     english_to_polish_months = {

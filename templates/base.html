@@ -66,10 +66,10 @@ window.onresize = adjustMargin;
                      <p><a href="{{ url_for('main_routes.superuser_panel') }} " class="btn btn-warning">Panel Zarządzania</a></p>
                      <p><a href="{{ url_for('main_routes.generate_report') }} " class="btn btn-warning">Generuj raport</a></p>
                  {% endif %}
-                    {% if current_user.can_view_deltas or current_user.is_admin%}
-<p >
-    <a class="btn btn-warning" href="{{ url_for('main_routes.generate_deltas_report') }}">Rozliczenia</a>
-</p>
+{#                    {% if current_user.can_view_deltas or current_user.is_admin%}#}
+{#<p >#}
+{#    <a class="btn btn-warning" href="{{ url_for('main_routes.generate_deltas_report') }}">Rozliczenia</a>#}
+{#</p>#}
 {% endif %}
                 <p class="navbar-brand">     </p>
 

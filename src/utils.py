@@ -439,7 +439,6 @@ def create_deltas_report_data(selected_meters, report_period):
                 MeterReading.date <= end_date
             ).order_by(MeterReading.date).all()
 
-            previous_reading = readings[-2].reading
             for month in range(report_period):
                 month_date = end_date - relativedelta(months=month)
                 month_name = month_date.strftime('%B %Y')
@@ -449,12 +448,8 @@ def create_deltas_report_data(selected_meters, report_period):
                     if reading.date.year == month_date.year and reading.date.month == month_date.month:
                         if prev:
                             meter_data[month_name] =round(Decimal(reading.reading - prev.reading), 3)
-                            print(reading.reading, prev.reading, month_name, meter_data[month_name])
                         else:
                             meter_data[month_name] = 0
-                            print(reading.reading, prev, month_name, meter_data[month_name])
-
-                        previous_reading = reading.reading
                         break
 
             report_data.append(meter_data)
