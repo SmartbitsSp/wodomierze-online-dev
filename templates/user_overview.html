@@ -33,6 +33,9 @@
         {% endfor %}
     </div>
 
+    <div class="form-group">
+        {{ edit_user_form.can_toggle_view.label }} {{ edit_user_form.can_toggle_view() }}  <!-- Nowe pole -->
+    </div>
 
     {{ edit_user_form.submit }}
 </form>

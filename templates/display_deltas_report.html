@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Raport delty za okres: {{ report_start_date }} do {{ report_end_date }}</h2>
+<p>Użytkownicy w raporcie: {{ unique_emails | join(', ') }}</p>
+<div class="table-responsive report-table-container">
+    <table class="report-table">
+        <tr>
+            <th>Email Użytkownika</th>
+            <th>Adres Licznika</th>
+            <th>Nr Radiowy</th>
+            <th>Nr Licznika</th>
+            <th>Typ Licznika</th>
+            <!-- Nagłówki dla miesięcy -->
+            {% for month_name in translated_month_names %}
+            <th>{{ month_name }}</th>
+            {% endfor %}
+        </tr>
+        {% for data in report_data %}
+        <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
+            <td>{{ data.user_email }}</td>
+            <td>{{ data.meter_address }}</td>
+            <td>{{ data.meter_number }}</td>
+            <td>{{ data.device_number }}</td>
+            <td>{{ data.meter_type }}</td>
+            <!-- Dane dla każdego miesiąca -->
+            {% for month_name in translated_month_names %}
+            <td>{{ data[month_name] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
