@@ -11,12 +11,12 @@ from werkzeug.utils import secure_filename
 from src.config import UPLOAD_FOLDER, EMAIL_KEY
 from src.forms import LoginForm, MeterForm, UploadForm, UserForm, EditAccountForm, \
     UserNotesForm, UserOverviewForm, MessageForm, AssignMeterToSuperuserForm, AssignMeterToUserForm, EditUserForm, \
-    MONTHS_PL
+    MONTHS_PL, AddMeterForm
 from src.models import User, db, Meter, MeterReading, get_all_users, Message, Address, MeterEditHistory, UserReportMonth
 import os
 from src.utils import process_csv_water, process_csv_heat, admin_required, is_valid_link, process_csv_events, \
     superuser_required, create_report_data, generate_random_password, remove_duplicate_readings, \
-    create_deltas_report_data
+    create_deltas_report_data, forbidden
 
 main_routes = Blueprint('main_routes', __name__)
 admin_routes = Blueprint('admin_routes', __name__)
@@ -139,7 +139,12 @@ def meter_details(meter_id):
     if not current_user.is_admin:
         user_accessible_months = user_months.get(meter.user.id, [])
         readings_list = [reading for reading in readings_list if reading['date'].month in user_accessible_months]
-    return render_template('meter_details.html', meter=meter, readings=readings_list, user=user, events=events)
+    if meter.is_main_meter:
+        sub_meters = meter.sub_meters
+    else:
+        sub_meters = []
+
+    return render_template('meter_details.html',sub_meters=sub_meters, meter=meter, readings=readings_list, user=user, events=events)
 
 
 @main_routes.route('/delete_meter/<int:meter_id>', methods=['POST'])
@@ -231,6 +236,7 @@ def update_meter_address(meter_id):
 @admin_required  # Dodaj dekorator, aby wymagać uprawnień administratora
 def admin_panel():
     user_form = UserForm()
+    meter_form = AddMeterForm()
 
     if user_form.validate_on_submit():
         user = User(email=user_form.email.data)
@@ -246,7 +252,7 @@ def admin_panel():
 
     users = get_all_users()
     meters = Meter.query.all()
-    return render_template('admin_panel.html', users=users, meters=meters, user_form=user_form)
+    return render_template('admin_panel.html',meter_form = meter_form, users=users, meters=meters, user_form=user_form)
 
 
 @main_routes.route('/add_user', methods=['GET', 'POST'])
@@ -378,13 +384,18 @@ def remove_meter(meter_id):
 @main_routes.route('/add_meter', methods=['GET', 'POST'])
 @admin_required
 def add_meter():
-    form = MeterForm()
+    form = AddMeterForm()
     if form.validate_on_submit():
-        meter = Meter(radio_number=form.radio_number.data, type=form.type.data, user_id=form.user_id.data)
-        db.session.add(meter)
+        new_meter = Meter(
+            radio_number=form.radio_number.data,
+            device_number=form.device_number.data,
+            type=form.type.data,
+            is_main_meter=form.is_main_meter.data
+        )
+        db.session.add(new_meter)
         db.session.commit()
-        flash('Licznik został dodany.')
-        return redirect(url_for('admin_routes.admin_panel'))
+        flash('Nowy licznik został dodany', 'success')
+        return redirect(url_for('main_routes.admin_panel'))
     return render_template('add_meter.html', form=form)
 
 
@@ -432,7 +443,7 @@ def assign_meter(user_id, meter_id):
 
 
 @main_routes.route('/delete_meters', methods=['POST'])
-@admin_required
+@forbidden
 def delete_meters():
     try:
         MeterReading.query.delete()
@@ -869,17 +880,21 @@ def edit_meter(meter_id):
 
     meter = Meter.query.get_or_404(meter_id)
     readings = MeterReading.query.filter_by(meter_id=meter.id).order_by(MeterReading.date).all()
+    unassigned_meters = Meter.query.filter_by(main_meter_id=None).all()
 
     if request.method == 'POST':
         new_radio_number = request.form.get('new_radio_number')
         reading_ids_to_delete = request.form.getlist('reading_ids')
-        delete_duplicates = request.form.get('delete_duplicates')
+        set_as_main_meter = request.form.get('set_as_main_meter')
+        sub_meter_ids = request.form.getlist('sub_meter_ids')
+        remove_sub_meter_id = request.form.get('remove_sub_meter_id')
+        reading_date = request.form.get('reading_date')
+        reading_value = request.form.get('reading_value')
 
         # Aktualizacja numeru radiowego
         if new_radio_number and new_radio_number != meter.radio_number:
             old_radio_number = meter.radio_number
             meter.radio_number = new_radio_number
-            # Dodaj wpis do historii edycji
             new_history_entry = MeterEditHistory(meter_id=meter_id, user_id=current_user.id,
                                                  edit_type='Change Radio Number',
                                                  edit_details=f'Changed from {old_radio_number} to {new_radio_number}')
@@ -890,7 +905,6 @@ def edit_meter(meter_id):
             reading = MeterReading.query.get(int(reading_id))
             if reading:
                 db.session.delete(reading)
-                # Dodaj wpis do historii edycji
                 new_history_entry = MeterEditHistory(meter_id=meter_id, user_id=current_user.id,
                                                      edit_type='Delete Reading',
                                                      edit_details=f'Deleted reading of {reading.date}')
@@ -902,31 +916,63 @@ def edit_meter(meter_id):
             if new_reading_value and new_reading_value != str(reading.reading):
                 old_reading_value = reading.reading
                 reading.reading = float(new_reading_value)
-                # Dodaj wpis do historii edycji
                 new_history_entry = MeterEditHistory(meter_id=meter_id, user_id=current_user.id,
                                                      edit_type='Edit Reading',
                                                      edit_details=f'Changed reading of {reading.date} from {old_reading_value} to {new_reading_value}')
                 db.session.add(new_history_entry)
 
-        # Usuwanie duplikatów
-        if delete_duplicates:
-            unique_dates = set()
-            for reading in readings:
-                if reading.date in unique_dates:
-                    db.session.delete(reading)
-                    # Dodaj wpis do historii edycji
-                    new_history_entry = MeterEditHistory(meter_id=meter_id, user_id=current_user.id,
-                                                         edit_type='Delete Duplicate',
-                                                         edit_details=f'Deleted duplicate reading of {reading.date}')
-                    db.session.add(new_history_entry)
-                else:
-                    unique_dates.add(reading.date)
+        # Ustawienie lub usunięcie licznika głównego
+        if set_as_main_meter == 'True':
+            meter.is_main_meter = True
+        elif set_as_main_meter == 'False':
+            meter.is_main_meter = False
+            for sub_meter in meter.sub_meters:
+                sub_meter.main_meter_id = None
+            meter.sub_meters = []
+
+        # Przypisanie podliczników
+        if sub_meter_ids:
+            for sub_meter_id in sub_meter_ids:
+                sub_meter = Meter.query.get(sub_meter_id)
+                if sub_meter:
+                    sub_meter.main_meter_id = meter.id
+
+        # Usuwanie podlicznika
+        if remove_sub_meter_id:
+            sub_meter = Meter.query.get(remove_sub_meter_id)
+            if sub_meter:
+                sub_meter.main_meter_id = None
+
+        # Dodanie nowego odczytu
+        if reading_date and reading_value:
+            new_reading = MeterReading(meter_id=meter.id, date=reading_date, reading=reading_value)
+            db.session.add(new_reading)
 
         db.session.commit()
         flash('Zmiany zostały zapisane.', 'success')
-        return redirect(url_for('main_routes.meter_details', meter_id=meter.id))
+        return redirect(url_for('main_routes.edit_meter', meter_id=meter.id))
 
-    return render_template('edit_meter.html', meter=meter, readings=readings)
+    return render_template('edit_meter.html', meter=meter, readings=readings, unassigned_meters=unassigned_meters)
+
+@main_routes.route('/assign_sub_meter/<int:meter_id>', methods=['POST'])
+@admin_required
+def assign_sub_meter(meter_id):
+    if not current_user.is_admin:
+        flash('Brak uprawnień do edycji licznika.', 'danger')
+        return redirect(url_for('main_routes.home'))
+
+    meter = Meter.query.get_or_404(meter_id)
+    sub_meter_id = request.form.get('sub_meter_id')
+    sub_meter = Meter.query.get(sub_meter_id)
+
+    if sub_meter:
+        sub_meter.main_meter_id = meter.id
+        db.session.commit()
+        flash('Licznik został przypisany.', 'success')
+    else:
+        flash('Nie znaleziono licznika.', 'danger')
+
+    return redirect(url_for('main_routes.edit_meter', meter_id=meter.id))
 
 
 @main_routes.route('/meter_history/<int:meter_id>')
