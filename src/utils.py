@@ -27,6 +27,13 @@ def admin_required(func):
 
     return decorated_function
 
+def forbidden(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        flash('Niedozwolona operacja', 'danger')
+        return redirect(url_for('main_routes.home'))
+    return decorated_function
+
 
 def superuser_required(f):
     @wraps(f)

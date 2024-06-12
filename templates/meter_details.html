@@ -76,6 +76,38 @@
     <button type="submit" class="btn btn-warning no-print" onclick="return confirm('Czy na pewno chcesz wyczyścić odczyty tego licznika?')">Wyczyść licznik</button>
 </form>
 {% endif %}
+
+    {% if meter.is_main_meter %}
+<div>
+    <button id="toggle-sub-meters" class="btn btn-primary no-print">Pokaż listę powiązanych liczników</button>
+    <div id="sub-meters-list" style="display: none;">
+        <h3>Powiązane liczniki</h3>
+        <ul>
+            {% for sub_meter in sub_meters %}
+            <li>
+                <a href="{{ url_for('main_routes.meter_details', meter_id=sub_meter.id) }}">{{ sub_meter.radio_number }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% else %}
+<p>Przypisany do licznika głównego: {% if meter.main_meter %}<a href="{{ url_for('main_routes.meter_details', meter_id=meter.main_meter.id) }}">{{ meter.main_meter.radio_number }}</a>{% else %}Brak{% endif %}</p>
+{% endif %}
+
+<script>
+document.getElementById('toggle-sub-meters').addEventListener('click', function() {
+    const subMetersList = document.getElementById('sub-meters-list');
+    const button = document.getElementById('toggle-sub-meters');
+    if (subMetersList.style.display === 'none') {
+        subMetersList.style.display = 'block';
+        button.textContent = 'Ukryj listę liczników';
+    } else {
+        subMetersList.style.display = 'none';
+        button.textContent = 'Pokaż listę powiązanych liczników';
+    }
+});
+</script>
 <h3 class="no-print">Odczyty</h3>
 <form class="no-print">
     <div class="form-group">

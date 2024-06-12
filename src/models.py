@@ -44,6 +44,15 @@ class Meter(db.Model):
     # Relacja do śledzenia, który superużytkownik posiada licznik
     superuser_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     superuser_owner = db.relationship('User', foreign_keys=[superuser_id], backref='owned_meters')
+    #dodanie pola do licznika głównego
+    is_main_meter = db.Column(db.Boolean, default=False)
+    main_meter_id = db.Column(db.Integer, db.ForeignKey('meter.id'), nullable=True)
+    sub_meters = db.relationship('Meter', backref=db.backref('main_meter', remote_side=[id]), lazy='dynamic')
+
+    def get_sub_meters_reading_sum(self):
+        if self.is_main_meter:
+            return sum(sub_meter.readings[-1].reading for sub_meter in self.sub_meters)
+        return 0
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)

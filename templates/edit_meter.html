@@ -5,36 +5,106 @@
 {% endblock extra_css %}
 
 {% block content %}
-<div class="edit-meter-container ">
+<div class="edit-meter-container">
+    <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}" class="btn btn-secondary">Powrót do podglądu licznika</a>
+
     <form method="post" action="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}">
         <div class="form-group">
             <label for="new_radio_number">Nowy numer radiowy:</label>
             <input type="text" id="new_radio_number" name="new_radio_number" class="form-control" value="{{ meter.radio_number }}">
         </div>
-        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+        <div class="form-group">
+            {% if meter.is_main_meter %}
+            <button type="submit" name="set_as_main_meter" value="False" class="btn btn-danger">Usuń licznik główny</button>
+            {% else %}
+            <button type="submit" name="set_as_main_meter" value="True" class="btn btn-primary">Ustaw jako licznik główny</button>
+            {% endif %}
+        </div>
     </form>
 
-    <h3>Odczyty</h3>
-<div class="table-responsive">
+    {% if meter.is_main_meter %}
+    <h3>Dodaj nowy odczyt</h3>
     <form method="post" action="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}">
-        <table>
-        <tr>
-            <th>Zaznacz</th>
-            <th>Data</th>
-            <th>Odczyt</th>
-            <th>Edytuj odczyt</th>
-        </tr>
-        {% for reading in readings %}
-        <tr>
-            <td><input type="checkbox" name="reading_ids" value="{{ reading.id }}"></td>
-            <td>{{ reading.date }}</td>
-            <td>{{ reading.reading }}</td>
-            <td><input type="text" name="reading_value_{{ reading.id }}" value="{{ reading.reading }}"></td>
-        </tr>
-        {% endfor %}
-    </table>
-        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+        <div class="form-group">
+            <label for="reading_date">Data odczytu:</label>
+            <input type="date" id="reading_date" name="reading_date" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="reading_value">Odczyt:</label>
+            <input type="text" id="reading_value" name="reading_value" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Dodaj odczyt</button>
     </form>
+
+    <h3>Powiązane liczniki</h3>
+    <ul style="max-height: 200px; overflow-y: auto;">
+        {% for sub_meter in meter.sub_meters %}
+        <li>
+            <form method="post" action="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}" style="display: inline;">
+                <input type="hidden" name="remove_sub_meter_id" value="{{ sub_meter.id }}">
+                <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
+            </form>
+            <span>{{ sub_meter.radio_number }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h3>Przypisz liczniki</h3>
+    <input type="text" id="search-meter-input" placeholder="Wyszukaj według numeru radiowego" class="form-control">
+    <form method="post" action="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}">
+        <div class="form-group" style="max-height: 200px; overflow-y: auto;">
+            <ul id="unassigned-meter-list" class="user-list">
+                {% for unassigned_meter in unassigned_meters %}
+                <li>
+                    <input type="checkbox" name="sub_meter_ids" value="{{ unassigned_meter.id }}">
+                    {{ unassigned_meter.radio_number }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <button type="submit" class="btn btn-primary">Przypisz liczniki</button>
+    </form>
+    {% endif %}
+
+    <h3>Odczyty</h3>
+    <div class="table-responsive">
+        <form method="post" action="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}">
+            <table>
+                <tr>
+                    <th>Zaznacz</th>
+                    <th>Data</th>
+                    <th>Odczyt</th>
+                    <th>Edytuj odczyt</th>
+                </tr>
+                {% for reading in readings %}
+                <tr>
+                    <td><input type="checkbox" name="reading_ids" value="{{ reading.id }}"></td>
+                    <td>{{ reading.date }}</td>
+                    <td>{{ reading.reading }}</td>
+                    <td><input type="text" name="reading_value_{{ reading.id }}" value="{{ reading.reading }}"></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+        </form>
+    </div>
+
+    <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}" class="btn btn-secondary">Powrót do podglądu licznika</a>
 </div>
-</div>
+
+<script>
+document.getElementById('search-meter-input').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const meterItems = document.querySelectorAll('#unassigned-meter-list li');
+
+    meterItems.forEach(function(item) {
+        const meterNumber = item.textContent.trim().toLowerCase();
+        if (meterNumber.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+</script>
 {% endblock %}

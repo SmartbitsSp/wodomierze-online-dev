@@ -117,3 +117,11 @@ class EditUserForm(FlaskForm):
                                         coerce=int)
     can_toggle_view = BooleanField('Może przełączać widok na deltę')
     submit = SubmitField('Zaktualizuj')
+
+
+class AddMeterForm(FlaskForm):
+    radio_number = StringField('Numer radiowy', validators=[DataRequired()])
+    device_number = StringField('Numer urządzenia', validators=[DataRequired()])
+    type = SelectField('Typ', choices=[('water', 'Wodomierz'), ('heat', 'Ciepłomierz')], validators=[DataRequired()])
+    is_main_meter = BooleanField('Czy to licznik główny?')
+    submit = SubmitField('Dodaj licznik')

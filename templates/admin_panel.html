@@ -55,6 +55,8 @@
     </div>
      <button type="submit" id="delete-selected" class="btn btn-danger" style="display: none;">Usuń wybrane liczniki</button>
     </form>
+    <button id="showMeterForm" class="btn btn-primary">Dodaj nowy licznik</button>
+        <button id="hideMeterForm" class="btn btn-secondary" style="display: none">Schowaj formularz</button>
    <!--- <form action="{{ url_for('admin_routes.remove_duplicates') }}" method="post">
     <button type="submit" class="btn btn-danger">Usuń duplikaty odczytów</button>
 </form>
@@ -111,11 +113,35 @@
     <button type="submit" class="btn btn-primary">Dodaj</button>
 </form>
 
+ <form id="meterForm" method="POST" action="{{ url_for('main_routes.add_meter') }}" style="display: none; max-width: 400px">
+            <h3>Dodaj nowy licznik</h3>
+            {{ meter_form.hidden_tag() }}
+            <div class="form-group">
+                {{ meter_form.radio_number.label(class="form-label") }}
+                {{ meter_form.radio_number(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ meter_form.device_number.label(class="form-label") }}
+                {{ meter_form.device_number(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ meter_form.type.label(class="form-label") }}
+                {{ meter_form.type(class="form-control") }}
+            </div>
+            <div class="form-check">
+                {{ meter_form.is_main_meter.label(class="form-check-label") }}
+                {{ meter_form.is_main_meter(class="form-check-input") }}
+            </div>
+            <button type="submit" class="btn btn-primary">Dodaj licznik</button>
+        </form>
+
     {% block user %}
 
     {% endblock user %}
 </div>
 </div>
+
+
 
 <script>
 document.getElementById('send-meters-count-btn').addEventListener('click', function() {
@@ -227,6 +253,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const  showMultipleUsersFormBtn =document.getElementById("showMultipleUsersForm");
         const  hideMultipleUsersFormBtn =document.getElementById("hideMultipleUsersForm");
         const multipleUsersForm = document.getElementById("multipleUsersForm")
+        const showMeterFormBtn = document.getElementById("showMeterForm");
+        const hideMeterFormBtn = document.getElementById("hideMeterForm");
+        const meterForm = document.getElementById("meterForm");
 
         showUserFormBtn.addEventListener("click", function () {
             userForm.style.display = "block";
@@ -251,6 +280,19 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.display = "none";
             showMultipleUsersFormBtn.style.display = "block";
         });
+
+
+        showMeterFormBtn.addEventListener("click", function() {
+            meterForm.style.display = "block";
+            this.style.display = "none";
+            hideMeterFormBtn.style.display = "block";
+    });
+
+        hideMeterFormBtn.addEventListener("click", function() {
+            meterForm.style.display = "none";
+            this.style.display = "none";
+            showMeterFormBtn.style.display = "block";
+    });
     </script>
 
     <script>
