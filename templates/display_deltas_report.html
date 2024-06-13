@@ -1,33 +1,183 @@
 {% extends 'base.html' %}
+{% block extra_css %}
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='ReportStyles.css')}}">
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css')}}">
+{% endblock extra_css %}
+
 {% block content %}
-<h2>Raport delty za okres: {{ report_start_date }} do {{ report_end_date }}</h2>
-<p>Użytkownicy w raporcie: {{ unique_emails | join(', ') }}</p>
-<div class="table-responsive report-table-container">
-    <table class="report-table">
-        <tr>
-            <th>Email Użytkownika</th>
-            <th>Adres Licznika</th>
-            <th>Nr Radiowy</th>
-            <th>Nr Licznika</th>
-            <th>Typ Licznika</th>
-            <!-- Nagłówki dla miesięcy -->
-            {% for month_name in translated_month_names %}
-            <th>{{ month_name }}</th>
-            {% endfor %}
-        </tr>
-        {% for data in report_data %}
-        <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
-            <td>{{ data.user_email }}</td>
-            <td>{{ data.meter_address }}</td>
-            <td>{{ data.meter_number }}</td>
-            <td>{{ data.device_number }}</td>
-            <td>{{ data.meter_type }}</td>
-            <!-- Dane dla każdego miesiąca -->
-            {% for month_name in translated_month_names %}
-            <td>{{ data[month_name] }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </table>
+    <button class="btn btn-secondary no-print" onclick="goBack()">Powrót</button>
+    <script>function goBack() {
+            window.history.back();
+        }
+    </script>
+<div class="print-header">
+    <img src="{{ url_for('static', filename='img/Zdalny_Odczyt_RGB.png') }}" alt="Logo" class="logo report-logo">
+    <h2>Raport delty za okres: {{ report_start_date }} do {{ report_end_date }}</h2>
+    <p>Użytkownicy w raporcie: {{ unique_emails | join(', ') }}</p>
 </div>
+    <div class="report-actions no-print">
+    <button id="download-csv">Pobierz CSV</button>
+    <button id="download-json">Pobierz JSON</button>
+    <button id="print-pdf">Drukuj PDF</button>
+</div>
+
+<div class="table-responsive report-table-container">
+<table class="report-table">
+    <tr>
+        <th>Email Użytkownika</th>
+        <th>Adres Licznika</th>
+        <th>Nr Radiowy</th>
+        <th>Nr Licznika</th>
+        <th>Typ Licznika</th>
+        <!-- Nagłówki dla miesięcy -->
+        {% for month_name in translated_month_names %}
+        <th>{{ month_name }}</th>
+        {% endfor %}
+    </tr>
+    {% for data in report_data %}
+    <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
+        <td>{{ data.user_email }}</td>
+        <td>{{ data.meter_address }}</td>
+        <td>{{ data.meter_number }}</td>
+        <td>{{ data.device_number }}</td>
+        <td>{{ data.meter_type }}</td>
+        <!-- Dane dla każdego miesiąca -->
+        {% for month_name in translated_month_names %}
+        <td>{{ data[month_name] }}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+</div>
+
+<script>
+    // Funkcja do konwersji danych na format CSV
+    function exportTableToCSVWithDialog() {
+        const userChoice = confirm("Czy chcesz pobrać plik CSV z polskimi znakami? Kliknij 'Anuluj' dla trybu zgodności (bez polskich znaków).");
+
+        if (userChoice) {
+            exportTableToCSVWithPolishChars();
+        } else {
+            exportTableToCSVWithCompatibilityMode();
+        }
+    }
+
+    function exportTableToCSVWithPolishChars() {
+        const table = document.querySelector('.report-table');
+        let csvContent = '';
+
+        for (let row of table.rows) {
+            let rowData = [];
+            for (let cell of row.cells) {
+                let cellText = '"' + cell.innerText.replace(/(\r\n|\n|\r)/gm, "") + '"';
+                rowData.push(cellText);
+            }
+            csvContent += rowData.join(',') + '\r\n';
+        }
+        // Utwórz unikalną nazwę pliku z datą
+        const date = new Date();
+        const dateString = date.toISOString().split('T')[0];
+        const fileName = `raport_${dateString}.csv`;
+
+        downloadCSV(csvContent, fileName);
+    }
+
+    function exportTableToCSVWithCompatibilityMode() {
+        const table = document.querySelector('.report-table');
+        let csvContent = '';
+
+        for (let row of table.rows) {
+            let rowData = [];
+            for (let cell of row.cells) {
+                let cellText = replacePolishChars(cell.innerText);
+                cellText = '"' + cellText.replace(/(\r\n|\n|\r)/gm, "") + '"';
+                rowData.push(cellText);
+            }
+            csvContent += rowData.join(',') + '\r\n';
+        }
+        // Utwórz unikalną nazwę pliku z datą
+        const date = new Date();
+        const dateString = date.toISOString().split('T')[0];
+        const fileName = `raport_${dateString}.csv`;
+
+        downloadCSV(csvContent, fileName);
+    }
+
+    function replacePolishChars(text) {
+        const polishChars = { 'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ż': 'z', 'ź': 'z' };
+        return text.replace(/[ąćęłńóśżź]/g, match => polishChars[match]);
+    }
+
+    function downloadCSV(csvContent, fileName) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.style.display = 'none';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Przypisz nową funkcję do przycisku eksportu
+    const exportButton = document.getElementById('download-csv');
+    exportButton.addEventListener('click', exportTableToCSVWithDialog);
+
+    function printReport() {
+        const date = new Date();
+        const dateString = date.toISOString().split('T')[0];
+        const suggestedFileName = `raport_${dateString}.pdf`;
+
+        alert(`Sugerowana nazwa pliku: ${suggestedFileName}`);
+
+        window.print();
+    }
+
+    // Przypisz funkcję do przycisku drukowania
+    const printButton = document.getElementById('print-pdf');
+    printButton.addEventListener('click', printReport);
+
+    function exportTableToJSON() {
+        const table = document.querySelector('.report-table'); // Znajdź tabelę po klasie
+        let jsonData = [];
+
+        // Pobierz nagłówki tabeli
+        const headers = [];
+        for (let headerCell of table.rows[0].cells) {
+            headers.push(headerCell.innerText);
+        }
+
+        // Przejście przez wiersze tabeli i zbieranie danych
+        for (let i = 1; i < table.rows.length; i++) {
+            let row = table.rows[i];
+            let rowData = {};
+            for (let j = 0; j < row.cells.length; j++) {
+                rowData[headers[j]] = row.cells[j].innerText;
+            }
+            jsonData.push(rowData);
+        }
+
+        // Utwórz unikalną nazwę pliku z datą
+        const date = new Date();
+        const dateString = date.toISOString().split('T')[0];
+        const fileName = `raport_${dateString}.json`;
+
+        // Utwórz link do pobrania pliku JSON
+        const blob = new Blob([JSON.stringify(jsonData, null, 4)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.style.display = 'none';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Przypisz funkcję do przycisku eksportu
+    const exportJSONButton = document.getElementById('download-json');
+    exportJSONButton.addEventListener('click', exportTableToJSON);
+</script>
+
 {% endblock %}

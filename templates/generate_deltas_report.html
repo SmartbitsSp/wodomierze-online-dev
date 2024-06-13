@@ -2,7 +2,7 @@
 {% block content %}
 <h2>Generuj raport delty</h2>
 <form method="POST">
-    <div class="form-group">
+    <div class="form-group" style="max-width: 450px">
         <label for="selected_meters">Wybierz liczniki:</label>
         <select multiple class="form-control" id="selected_meters" name="selected_meters">
             {% for user in users %}

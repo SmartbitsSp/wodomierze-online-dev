@@ -79,6 +79,7 @@
 
     {% if meter.is_main_meter %}
 <div>
+<h3>Suma ostatnich odczytów z liczników podrzędnych: <span style="background-color: {{ background_color }};">{{ total_sum }}</span></h3>
     <button id="toggle-sub-meters" class="btn btn-primary no-print">Pokaż listę powiązanych liczników</button>
     <div id="sub-meters-list" style="display: none;">
         <h3>Powiązane liczniki</h3>

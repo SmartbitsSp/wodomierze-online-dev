@@ -24,6 +24,7 @@ superuser_routes = Blueprint('superuser_routes', __name__)
 user_routes = Blueprint('user_routes', __name__)
 REPORTS_DIR = 'reports'
 
+
 @main_routes.route('/')
 def welcome():
     if current_user.is_authenticated == True:
@@ -41,6 +42,9 @@ def home():
             return redirect(url_for("main_routes.superuser_panel"))
         user = current_user
         assigned_meters = user.meters
+        if not current_user.is_admin and not current_user.is_superuser:
+            # Filtruj, aby wykluczyć liczniki główne
+            assigned_meters = [meter for meter in assigned_meters if not meter.is_main_meter]
         return render_template('home.html', assigned_meters=assigned_meters)
     return redirect(url_for('main_routes.login'))
 
@@ -130,27 +134,77 @@ def meter_details(meter_id):
 
     readings = MeterReading.query.filter_by(meter_id=meter.id).all()
     readings_list = [{"date": reading.date, "reading": reading.reading} for reading in readings]
-    if user:
-        user_months = {user.id: [month.month for month in user.report_months]}
-    if current_user.is_superuser:
-        for assigned_user in current_user.assigned_users:
-            user_months[assigned_user.id] = [month.month for month in assigned_user.report_months]
+
+    if current_user.is_admin:
+        users = User.query.all()
+        user_months = {user.id: list(range(1, 13)) for user in users}
+    else:
+        if user:
+            user_months = {user.id: [month.month for month in user.report_months]}
+
+
+        if current_user.is_superuser:
+            for assigned_user in current_user.assigned_users:
+                user_months[assigned_user.id] = [month.month for month in assigned_user.report_months]
 
     if not current_user.is_admin:
         user_accessible_months = user_months.get(meter.user.id, [])
         readings_list = [reading for reading in readings_list if reading['date'].month in user_accessible_months]
+    difference_percent = 0
+    total_sum = 0
+    sub_meters = meter.sub_meters if meter.is_main_meter else []
     if meter.is_main_meter:
-        sub_meters = meter.sub_meters
-    else:
-        sub_meters = []
+        for sub_meter in sub_meters:
+            sub_meter_readings = MeterReading.query.filter_by(meter_id=sub_meter.id).order_by(MeterReading.date.desc()).all()
+            if sub_meter.user and sub_meter.user.id in user_months and not current_user.is_admin:
+                accessible_months = user_months[sub_meter.user.id]
+                for reading in sub_meter_readings:
+                    if reading.date.month in accessible_months:
+                        total_sum += reading.reading
+                        print(f"Adding reading from sub_meter {sub_meter.radio_number}: {reading.reading}")
+                        break
+            if current_user.is_admin:
+                last_reading = MeterReading.query.filter_by(meter_id=sub_meter.id).order_by(
+                    MeterReading.date.desc()).first()
+                if last_reading:
+                    total_sum += last_reading.reading
 
-    return render_template('meter_details.html',sub_meters=sub_meters, meter=meter, readings=readings_list, user=user, events=events)
+        last_main_reading = readings[0].reading if readings else 0
+        print(last_main_reading, total_sum)
+        if last_main_reading > 0:
+            difference_percent = ((total_sum - last_main_reading) / last_main_reading) * 100
+        else:
+            difference_percent = 0
+
+
+
+    total_sum=round(total_sum,3)
+    background_color = None
+
+
+    # Ustaw kolor tła na podstawie różnicy procentowej
+    if abs(difference_percent) <= 1:
+        background_color = "lightgreen"
+    elif abs(difference_percent) <= 5:
+        background_color = "lightyellow"
+    else:
+        background_color = "lightcoral"
+
+    print(background_color, difference_percent)
+
+
+
+    return render_template('meter_details.html', sub_meters=sub_meters, meter=meter, readings=readings_list, user=user,
+                           events=events, total_sum=total_sum, background_color=background_color)
 
 
 @main_routes.route('/delete_meter/<int:meter_id>', methods=['POST'])
 @admin_required
 def delete_meter(meter_id):
     meter = Meter.query.get_or_404(meter_id)
+    if meter.is_main_meter:
+        for sub_meter in meter.sub_meters:
+            sub_meter.main_meter_id = None
     db.session.delete(meter)
     db.session.commit()
     flash('Licznik został usunięty.', 'success')
@@ -238,6 +292,7 @@ def admin_panel():
     user_form = UserForm()
     meter_form = AddMeterForm()
 
+
     if user_form.validate_on_submit():
         user = User(email=user_form.email.data)
         user.set_password(user_form.password.data)
@@ -252,7 +307,7 @@ def admin_panel():
 
     users = get_all_users()
     meters = Meter.query.all()
-    return render_template('admin_panel.html',meter_form = meter_form, users=users, meters=meters, user_form=user_form)
+    return render_template('admin_panel.html', meter_form=meter_form, users=users, meters=meters, user_form=user_form)
 
 
 @main_routes.route('/add_user', methods=['GET', 'POST'])
@@ -287,6 +342,7 @@ def add_user():
 @admin_required
 def user_overview(user_id):
     user = User.query.get(user_id)
+    meter_form = AddMeterForm()
     is_superuser = user.is_superuser
     is_admin = user.is_admin
     available_meters = Meter.query.filter_by(user_id=None).all()
@@ -355,6 +411,7 @@ def user_overview(user_id):
         unassigned_users=unassigned_users,
         assigned_meters=assigned_meters,
         edit_user_form=edit_user_form,
+        meter_form=meter_form
     )
 
 
@@ -870,7 +927,6 @@ def add_multiple_users():
     return render_template('user_summary.html', users=user_data)
 
 
-
 @main_routes.route('/edit_meter/<int:meter_id>', methods=['GET', 'POST'])
 @login_required
 def edit_meter(meter_id):
@@ -953,6 +1009,7 @@ def edit_meter(meter_id):
         return redirect(url_for('main_routes.edit_meter', meter_id=meter.id))
 
     return render_template('edit_meter.html', meter=meter, readings=readings, unassigned_meters=unassigned_meters)
+
 
 @main_routes.route('/assign_sub_meter/<int:meter_id>', methods=['POST'])
 @admin_required
@@ -1041,6 +1098,7 @@ def generate_deltas_report():
         users = User.query.filter_by(superuser_id=current_user.id).all()
     return render_template('generate_deltas_report.html', users=users)
 
+
 @main_routes.route('/display_deltas_report')
 @superuser_required
 def display_deltas_report():
@@ -1084,7 +1142,6 @@ def display_deltas_report():
                            end_date=end_date, relativedelta=relativedelta,
                            report_start_date=report_start_date.strftime('%Y-%m-%d'),
                            report_end_date=report_end_date.strftime('%Y-%m-%d'), unique_emails=unique_emails)
-
 
 # @admin_routes.route('/emitel-readings', methods=['POST'])
 # @admin_required  # Upewnij się, że ta trasa jest dostępna tylko dla administratorów
