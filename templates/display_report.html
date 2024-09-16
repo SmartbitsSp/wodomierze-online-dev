@@ -12,7 +12,8 @@
         }
     </script>
 <div class="print-header">
-    <img src="{{ url_for('static', filename='img/Zdalny_Odczyt_RGB.png') }}" alt="Logo" class="logo report-logo">
+    <img src="{{ url_for('static', filename='img/Zdalny_Odczyt_RGB.png') }}" alt="Logo" class="report-logo">
+    <p id="time"></p>
     <h2>Raport za okres: {{ report_start_date }} do {{ report_end_date }}</h2>
     <p>Użytkownicy w raporcie: {{ unique_emails | join(', ') }}</p>
 </div>
@@ -21,41 +22,60 @@
     <button id="download-json">Pobierz JSON</button>
     <button id="print-pdf">Drukuj PDF</button>
 </div>
-
 <div class="table-responsive report-table-container">
-<table class="report-table">
-    <tr>
-        <th>Email Użytkownika</th>
-        <th>Adres Licznika</th>
-        <th>Nr Radiowy</th>
-        <th>Nr Licznika</th>
-        <th>Typ Licznika</th>
-        <!-- Nagłówki dla miesięcy -->
-        {% for month_name in translated_month_names %}
-        <th>{{ month_name }}</th>
-        {% endfor %}
-    </tr>
+    {% set current_user = namespace(foo=None) %} 
+
     {% for data in report_data %}
-    <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
-        <td>{{ data.user_email }}</td>
-        <td>{{ data.meter_address }}</td>
-        <td>{{ data.meter_number }}</td>
-        <td>{{ data.device_number }}</td>
-        <td>{{ data.meter_type }}</td>
-        <!-- Dane dla każdego miesiąca -->
-        {% for month_name in translated_month_names %}
-        <td>{{ data[month_name] }}</td>
-        {% endfor %}
-    </tr>
+    {% if current_user.foo != data.user_email %}
+            {% if not loop.first %}
+                </table> <!-- Close the previous table if it's not the first iteration -->
+            {% endif %}
+            
+            <!-- Update the current user -->
+            {% set current_user.foo = data.user_email %}
+    
+            <!-- Display the user's email and meter type -->
+            <h3 class="user-line">{{ data.user_email }}</h3>
+            <h4>{{ data.meter_type }}</h4>
+    
+            <!-- Start a new table for the current user -->
+            <table class="report-table">
+                <tr>
+<!--                     <th class="no-print">Email Użytkownika</th> -->
+                    <th id="address">Adres Licznika</th>
+                    <th class="wide-cell">Nr Radiowy</th>
+                    <th class="wide-cell">Nr Licznika</th>
+<!--                     <th class="no-print">Typ Licznika</th> -->
+                    <!-- Nagłówki dla miesięcy -->
+                    {% for month_name in translated_month_names %}
+                    <th>{{ month_name }}</th>
+                    {% endfor %}
+                </tr>
+        {% endif %}
+    
+        <!-- Always display the row for each entry -->
+        <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
+<!--             <td class="no-print">{{ data.user_email }}</td> -->
+            <td>{{ data.meter_address }}</td>
+            <td>{{ data.meter_number }}</td>
+            <td>{{ data.device_number }}</td>
+<!--             <td class="no-print">{{ data.meter_type }}</td> -->
+            <!-- Dane dla każdego miesiąca -->
+            {% for month_name in translated_month_names %}
+            <td>{{ data[month_name]|replace('.', ',') }}</td>
+            {% endfor %}
+        </tr>
     {% endfor %}
-</table>
+    </table> <!-- Close the last table -->
+    
 </div>
 {#<button id="showChartBtn" class="btn btn-primary no-print" style="display: none;">Pokaż wykres</button>
 <button id="hideChartBtn" class="btn btn-primary no-print">Ukryj wykres</button>
 
 <!-- Kontener na wykres -->
 <div id="reportChart" style="width:inherit;height: 100%" ></div>#}
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var reportData = {{ report_data | tojson | safe }};
@@ -191,18 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 
-
-
-
-
-
-
-
-
-
 </script>
 
- <script>
+<script>
     // Funkcja do konwersji danych na format CSV
     function exportTableToCSVWithDialog() {
     const userChoice = confirm("Czy chcesz pobrać plik CSV z polskimi znakami? Kliknij 'Anuluj' dla trybu zgodności (bez polskich znaków).");
@@ -215,16 +226,18 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 function exportTableToCSVWithPolishChars() {
-    const table = document.querySelector('.report-table');
+    const tables = document.querySelectorAll('.report-table');
     let csvContent = '';
-
-    for (let row of table.rows) {
-        let rowData = [];
-        for (let cell of row.cells) {
-            let cellText = '"' + cell.innerText.replace(/(\r\n|\n|\r)/gm, "") + '"';
-            rowData.push(cellText);
+    for (let table of tables) {
+        for (let row of table.rows) {
+            let rowData = [];
+            for (let cell of row.cells) {
+                let cellText = '"' + cell.innerText.replace(/(\r\n|\n|\r)/gm, "") + '"';
+                rowData.push(cellText);
+            }
+            //Pominięcie nadmiarowych nazw kolumn 
+            if (!csvContent.includes(rowData.join(';'))) csvContent += rowData.join(';') + '\r\n';
         }
-        csvContent += rowData.join(',') + '\r\n';
     }
     // Utwórz unikalną nazwę pliku z datą
     const date = new Date();
@@ -237,7 +250,7 @@ function exportTableToCSVWithPolishChars() {
 function exportTableToCSVWithCompatibilityMode() {
     const table = document.querySelector('.report-table');
     let csvContent = '';
-
+//todo
     for (let row of table.rows) {
         let rowData = [];
         for (let cell of row.cells) {
@@ -245,7 +258,8 @@ function exportTableToCSVWithCompatibilityMode() {
             cellText = '"' + cellText.replace(/(\r\n|\n|\r)/gm, "") + '"';
             rowData.push(cellText);
         }
-        csvContent += rowData.join(',') + '\r\n';
+        //Pominięcie nadmiarowych nazw kolumn 
+        if (!csvContent.includes(rowData.join(';'))) csvContent += rowData.join(';') + '\r\n';
     }
     // Utwórz unikalną nazwę pliku z datą
     const date = new Date();
@@ -261,7 +275,8 @@ function replacePolishChars(text) {
 }
 
 function downloadCSV(csvContent, fileName) {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = fileName;
@@ -276,14 +291,16 @@ function downloadCSV(csvContent, fileName) {
 const exportButton = document.getElementById('download-csv');
 exportButton.addEventListener('click', exportTableToCSVWithDialog);
 
-   function printReport() {
+function printReport() {
     const date = new Date();
     const dateString = date.toISOString().split('T')[0];
     const suggestedFileName = `raport_${dateString}.pdf`;
+    document.getElementById("time").innerHTML="Data wygenerowania raportu:<br>" + date.toLocaleString();
 
-    alert(`Sugerowana nazwa pliku: ${suggestedFileName}`);
+    //alert(`Sugerowana nazwa pliku: ${suggestedFileName}`);
 
     window.print();
+
 }
 
 // Przypisz funkcję do przycisku drukowania
@@ -293,23 +310,25 @@ printButton.addEventListener('click', printReport);
 
 
 function exportTableToJSON() {
-    const table = document.querySelector('.report-table'); // Znajdź tabelę po klasie
+    const tables = document.querySelectorAll('.report-table'); // Znajdź tabelę po klasie
     let jsonData = [];
 
     // Pobierz nagłówki tabeli
     const headers = [];
-    for (let headerCell of table.rows[0].cells) {
+    for (let headerCell of tables[0].rows[0].cells) {
         headers.push(headerCell.innerText);
     }
 
     // Przejście przez wiersze tabeli i zbieranie danych
-    for (let i = 1; i < table.rows.length; i++) {
-        let row = table.rows[i];
-        let rowData = {};
-        for (let j = 0; j < row.cells.length; j++) {
-            rowData[headers[j]] = row.cells[j].innerText;
+    for (let table of tables) {
+        for (let i = 1; i < table.rows.length; i++) {
+            let row = table.rows[i];
+            let rowData = {};
+            for (let j = 0; j < row.cells.length; j++) {
+                rowData[headers[j]] = row.cells[j].innerText;
+            }
+            jsonData.push(rowData);
         }
-        jsonData.push(rowData);
     }
 
     // Utwórz unikalną nazwę pliku z datą

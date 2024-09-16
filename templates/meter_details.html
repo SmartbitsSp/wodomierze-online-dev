@@ -11,7 +11,7 @@
 <button class="btn btn-secondary no-print" onclick="goBack()">Powrót</button>
 
 <h2>Szczegóły licznika</h2>
-    <a href="{{ url_for('main_routes.meter_history', meter_id=meter.id) }}" class="btn btn-info">Wyświetl historię</a>
+    <a href="{{ url_for('main_routes.meter_history', meter_id=meter.id) }}" class="btn btn-info no-print">Wyświetl historię</a>
 
     {% if current_user.is_admin %}
     <a href="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}" class="btn btn-primary no-print">Edytuj licznik</a>
@@ -127,7 +127,7 @@ document.getElementById('toggle-sub-meters').addEventListener('click', function(
 <button id="bar-chart-button" class="no-print" onclick="showChart('bar')">wykres słupkowy</button>
 <button id="table-button" class="no-print" onclick="showTable()">tabela</button>
 
-<div id="chart-container"></div>
+<div id="chart-container" class="no-print"></div>
 <div id="table-container"></div>
 
 
@@ -240,7 +240,7 @@ function updateTable() {
 
     var tableHTML = '<table class="table"><thead><tr><th>Data</th><th>' + getReadingUnit() + '</th></tr></thead><tbody>';
     filteredReadings.forEach(function(reading) {
-        tableHTML += '<tr><td>' + formatDateForTable(reading.date) + '</td><td>' + reading.reading + '</td></tr>';
+        tableHTML += '<tr><td>' + formatDateForTable(reading.date) + '</td><td>' + reading.reading.toString().replace('.', ',') + '</td></tr>';
     });
     tableHTML += '</tbody></table>';
     tableContainer.innerHTML = tableHTML;
@@ -346,7 +346,7 @@ if (rangeslider) {
         function exportToCsv(readingsList) {
         var csvContent = "data:text/csv;charset=utf-8," +
             "Date,Reading\n" +
-            readingsList.map(reading => `${formatDateForCSV(reading.date)},${reading.reading}`).join("\n");
+            readingsList.map(reading => `${formatDateForCSV(reading.date)};${reading.reading.toString().replace('.', ',')}`).join("\n");
 
         var encodedUri = encodeURI(csvContent);
         var link = document.createElement("a");
