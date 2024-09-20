@@ -231,17 +231,20 @@ function updateChart(startDate, endDate) {
 
 function updateTable() {
     var filteredReadings = readingsList;
+    var size = Object.keys(filteredReadings).length;
 
     if (selectedStartDate && selectedEndDate) {
         filteredReadings = readingsList.filter(function(reading) {
             return reading.date >= selectedStartDate && reading.date <= selectedEndDate;
         });
     }
-
+    console.log(filteredReadings);
+    console.log(typeof(filteredReadings));
+    console.log(size);
     var tableHTML = '<table class="table"><thead><tr><th>Data</th><th>' + getReadingUnit() + '</th></tr></thead><tbody>';
-    filteredReadings.forEach(function(reading) {
-        tableHTML += '<tr><td>' + formatDateForTable(reading.date) + '</td><td>' + reading.reading.toString().replace('.', ',') + '</td></tr>';
-    });
+    for(let i=size-1; i>=0; i--) {
+        tableHTML += '<tr><td>' + formatDateForTable(filteredReadings[i].date) + '</td><td>' + filteredReadings[i].reading.toString().replace('.', ',') + '</td></tr>';
+    }
     tableHTML += '</tbody></table>';
     tableContainer.innerHTML = tableHTML;
 }
