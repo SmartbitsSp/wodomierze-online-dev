@@ -43,7 +43,6 @@
                 <tr>
 <!--                     <th class="no-print">Email Użytkownika</th> -->
                     <th id="address">Adres Licznika</th>
-                    <th class="wide-cell">Nr Radiowy</th>
                     <th class="wide-cell">Nr Licznika</th>
 <!--                     <th class="no-print">Typ Licznika</th> -->
                     <!-- Nagłówki dla miesięcy -->
@@ -57,7 +56,6 @@
         <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
 <!--             <td class="no-print">{{ data.user_email }}</td> -->
             <td>{{ data.meter_address }}</td>
-            <td>{{ data.meter_number }}</td>
             <td>{{ data.device_number }}</td>
 <!--             <td class="no-print">{{ data.meter_type }}</td> -->
             <!-- Dane dla każdego miesiąca -->
