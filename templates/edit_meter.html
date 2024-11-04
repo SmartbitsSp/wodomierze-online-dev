@@ -5,7 +5,7 @@
 {% endblock extra_css %}
 
 {% block content %}
-<div class="edit-meter-container">
+<div class="edit-meter-container border-primary">
     <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}" class="btn btn-secondary">Powrót do podglądu licznika</a>
 
     <form method="post" action="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}">
@@ -89,7 +89,6 @@
         </form>
     </div>
 
-    <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}" class="btn btn-secondary">Powrót do podglądu licznika</a>
 </div>
 
 <script>

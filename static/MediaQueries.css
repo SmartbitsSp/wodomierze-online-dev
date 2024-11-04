@@ -1,4 +1,8 @@
 @media print {
+    body {
+        background-color: transparent;
+    }
+
     .no-print {
         display: none;
     }
@@ -56,11 +60,5 @@
 
     .left-box, .right-box {
         width: 100%;
-    }
-}
-
-@media (min-width: 992px) {
-    #userListCollapse, #meterListCollapse {
-        display: block !important;
     }
 }

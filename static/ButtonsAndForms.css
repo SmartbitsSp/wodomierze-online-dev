@@ -36,8 +36,24 @@
 
 .btn-primary{
     margin: 5px;
+    background-color: #3470B6;
+    border: none;
+}
+.btn-primary:hover {
+    background-color: #2A5B8E;
 }
 .btn-secondary{
     margin: 5px;
 }
+.btn-warning {
+    color: white;
+    background-color: #3470B6;
+    border: none;
+}
+.btn-warning:hover {
+    background-color: #2A5B8E;
+}
 
+.upload {
+    padding: 2vw;
+}

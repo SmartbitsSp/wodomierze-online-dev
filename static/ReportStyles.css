@@ -32,20 +32,6 @@
     margin-bottom: 20px;
 }
 
-.report-actions button {
-    margin-right: 10px;
-    padding: 5px 15px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.report-actions button:hover {
-    background-color: #45a049;
-}
-
 .table-responsive {
     overflow-x: auto;
 }
@@ -92,48 +78,34 @@
         margin-bottom: 20px;
     }
 
-    .report-actions button {
-        margin-right: 10px;
-        padding: 5px 15px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .report-actions button:hover {
-        background-color: #45a049;
-    }
 
     .table-responsive {
     overflow-x: auto;
 }
 
-    .user-list-r {
+.user-list-r {
     margin-top: 20px;
     max-width: 400px;
-    max-height: 600px; /* Możesz dostosować tę wartość do swoich potrzeb */
+    max-height: 60vh; /* Możesz dostosować tę wartość do swoich potrzeb */
     overflow-y: auto; /* Umożliwia przewijanie pionowe, gdy zawartość przekracza maksymalną wysokość */
-    border: 1px solid #ccc; /* Opcjonalnie, dla lepszej widoczności */
     padding: 10px;
     border-radius: 5px; /* Zaokrąglenie rogów */
-    background-color: #f9f9f9; /* Tło listy */
+    scrollbar-color: #313131 transparent;
 }
 
 .user-entry {
     margin-bottom: 10px;
-    border: 1px solid #ddd;
+    border-bottom: 2px solid #1b5293;
     padding: 10px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+
 }
 
 .user-header {
     cursor: pointer;
-    display: flex;
+    display: grid;
+    grid-template-columns: 10fr 1fr 1fr;
     align-items: center;
-    background-color: white;
+    background-color: #EFEFEF;
     padding: 5px;
     border-radius: 8px;
     margin-bottom: 5px;
@@ -146,16 +118,24 @@
 
 .meter-list {
     margin-top: 10px;
-    margin-left: 20px;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
 }
 
 .meter-entry {
     margin-bottom: 5px;
-    background-color: white;
+    background-color: #EFEFEF;
     padding: 5px;
     border-radius: 8px;
+    width: 90%;
+    display: grid;
+    grid-template-columns: 10fr 2fr;
 }
 
+.meter-checkbox {
+    width: 25%;
+}
 /* Styl dla kontenera wykresu */
 #reportChart {
     width: 100%;
@@ -196,4 +176,46 @@
 .plotly .scatterlayer .trace .points .point {
     stroke: #fff; /* Białe obramowanie punktów */
     stroke-width: 1.5px;
+}
+
+.raport-main {
+    display: grid;
+    place-items: center;
+    .search-container {
+        width: 100%;
+    }
+    input:not(.btn, .user-checkbox, .meter-checkbox) {
+        margin: 0;
+        border: 2px solid #1b5293;
+        border-radius: 1rem;
+        padding: 5px;
+        width: 100%;
+    }
+    .user-checkbox {
+        margin: 0 10px;
+        width: fit-content;
+
+    }
+
+    label {
+        margin: 0;
+    }
+
+    .user-header span {
+        justify-self: right;
+    }
+
+    #bottom {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        place-items: center;
+    }
+
+    select {
+        margin: 0;
+        border: 2px solid #1b5293;
+        border-radius: 1rem;
+        padding: 5px;
+        width: 100%;
+    }
 }

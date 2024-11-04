@@ -18,9 +18,9 @@
     <p>Użytkownicy w raporcie: {{ unique_emails | join(', ') }}</p>
 </div>
     <div class="report-actions no-print">
-    <button id="download-csv">Pobierz CSV</button>
-    <button id="download-json">Pobierz JSON</button>
-    <button id="print-pdf">Drukuj PDF</button>
+    <button class="btn btn-primary" id="download-csv">Pobierz CSV</button>
+    <button class="btn btn-primary" id="download-json">Pobierz JSON</button>
+    <button class="btn btn-primary" id="print-pdf">Drukuj PDF</button>
 </div>
 <div class="table-responsive report-table-container">
     {% set current_user = namespace(foo=None) %} 

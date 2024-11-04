@@ -24,21 +24,8 @@
 
 
 <body>
-<script>
-function adjustMargin() {
-    var navbarHeight = document.querySelector('.navbar').offsetHeight;
-    var centerBox = document.querySelector('.center-box');
-    centerBox.style.marginTop = navbarHeight + 'px';
-}
 
-// Wywołaj funkcję przy ładowaniu strony
-window.onload = adjustMargin;
-
-// Wywołaj funkcję przy zmianie rozmiaru okna
-window.onresize = adjustMargin;
-</script>
-
-    <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
     <a class="navbar-brand" href="{{ url_for('main_routes.home') }}"><img src="{{ url_for('static', filename='img/Zdalny_Odczyt_RGB.png') }}" alt="Logo" class="logo">
         </a>
     {% if current_user.is_authenticated %}
@@ -47,7 +34,7 @@ window.onresize = adjustMargin;
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
 </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
                     <a class="nav-link" href="{{ url_for('main_routes.home') }}">  <span class="sr-only">(current)</span></a>
@@ -57,34 +44,34 @@ window.onresize = adjustMargin;
             <div class="form-inline my-2 my-lg-0">
                 {% if current_user.is_authenticated %}
                 {% if current_user.is_admin %}
-                <p><a href="{{ url_for('admin_routes.upload_csv') }} " class="btn btn-warning">Prześlij plik</a></p>
-                    <p><a href="{{ url_for('main_routes.generate_report') }} " class="btn btn-warning">Generuj raport</a></p>
-                    <p><a href="{{ url_for('admin_routes.admin_panel') }} " class="btn btn-warning">Panel Administratora</a></p>
-                    <p><a href="{{ url_for('main_routes.messages') }}" class="btn btn-warning">Wyślij wiadodmość</a></p>
+                <p><a href="{{ url_for('admin_routes.upload_csv') }} " class="btn btn-primary">Prześlij plik</a></p>
+                    <p><a href="{{ url_for('main_routes.generate_report') }} " class="btn btn-primary">Generuj raport</a></p>
+                    <p><a href="{{ url_for('admin_routes.admin_panel') }} " class="btn btn-primary">Panel Administratora</a></p>
+                    <p><a href="{{ url_for('main_routes.messages') }}" class="btn btn-primary">Wyślij wiadodmość</a></p>
                 {% endif %}
                  {% if current_user.is_superuser %}
-                     <p><a href="{{ url_for('main_routes.superuser_panel') }} " class="btn btn-warning">Panel Zarządzania</a></p>
-                     <p><a href="{{ url_for('main_routes.generate_report') }} " class="btn btn-warning">Generuj raport</a></p>
+                     <p><a href="{{ url_for('main_routes.superuser_panel') }} " class="btn btn-primary">Panel Zarządzania</a></p>
+                     <p><a href="{{ url_for('main_routes.generate_report') }} " class="btn btn-primary">Generuj raport</a></p>
                  {% endif %}
                     {% if current_user.is_superuser or current_user.is_admin%}
 <p >
-    <a class="btn btn-warning" href="{{ url_for('main_routes.generate_deltas_report') }}">Rozliczenia</a>
+    <a class="btn btn-primary" href="{{ url_for('main_routes.generate_deltas_report') }}">Rozliczenia</a>
 </p>
 {% endif %}
                 <p class="navbar-brand">     </p>
 
                     {% if not current_user.is_admin %}
-                    <p><a href="{{ url_for('main_routes.messages') }} " class="btn btn-warning">Wiadomości
+                    <p><a href="{{ url_for('main_routes.messages') }} " class="btn btn-primary">Wiadomości
                     {% if current_user.unread_messages > 0 %}
       <span class="badge badge-danger">{{ current_user.unread_messages }}</span>
     {% endif %}
                     {% endif %}
                     </a></p>
-                    <p><a href="{{ url_for('main_routes.edit_account') }}" class="btn btn-warning">Edytuj profil</a></p>
-                    <p><a href="{{ url_for('main_routes.logout') }} " class="btn btn-warning">Wyloguj</a></p>
+                    <p><a href="{{ url_for('main_routes.edit_account') }}" class="btn btn-primary">Edytuj profil</a></p>
+                    <p><a href="{{ url_for('main_routes.logout') }} " class="btn btn-primary">Wyloguj</a></p>
                 {% else %}
 
-                    <a href="{{ url_for('main_routes.login') }}" class="btn btn-warning">Login</a>
+                    <a href="{{ url_for('main_routes.login') }}" class="btn btn-primary">Login</a>
                 {% endif %}
 
 
@@ -99,14 +86,13 @@ window.onresize = adjustMargin;
 <div class="center-box">
 {% with messages = get_flashed_messages() %}
         {% if messages %}
-        <div class="alert alert-info">
+        <div id="alert" class="alert alert-info">
             {% for message in messages %}
             {{ message }}
             {% endfor %}
         </div>
         {% endif %}
         {% endwith %}
-    <br>
     {% block content %}
 
 
@@ -122,7 +108,7 @@ window.onresize = adjustMargin;
                 <h3 style="color: #f9f9f9">Kontakt</h3>
                 <p style="color: #f9f9f9">Telefon: 608 25 88 77</p>
                 <p style="color: #f9f9f9">Nawiąż współpracę: mw@zdalnyodczyt.com</p>
-                <p style="color: #f9f9f9">Wsparcie techniczne: jakub.figaj@gmail.com</p>
+                <p style="color: #f9f9f9">Wsparcie techniczne: pomoc@smartbits.pl</p>
             </div>
             <div class="col-md-6">
                 <h3 style="color: #f9f9f9">Linki</h3>
@@ -150,6 +136,43 @@ window.onresize = adjustMargin;
         integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
         crossorigin="anonymous"></script>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const alert = document.getElementById('alert');
+
+        setTimeout(() => alert.style.opacity=0, 1000);
+        setTimeout(() => alert.remove(), 2000);
+        });
+</script>
+
+<script>
+    document.querySelectorAll(".btn-toggle").forEach(button => {
+        button.addEventListener("click", function() {
+            var targetId = this.getAttribute("data-target");
+            var targetDiv = document.getElementById(targetId);
+
+            if (targetDiv.style.display === "none" || targetDiv.style.display === "") {
+                targetDiv.style.display = "block";
+                this.getElementsByTagName('img')[0].style.transform = "rotate(90deg)";
+            } else {
+                targetDiv.style.display = "none";
+                this.getElementsByTagName('img')[0].style.transform = "rotate(0deg)";
+            }
+        });
+    });
+</script>
+
+<script>
+    document.querySelectorAll(".collapse").forEach(collapse => {
+        if (collapse.style.display === "none" || collapse.style.display === "") {
+                const btnId = collapse.id;
+                const dataTarget = '[data-target="'+btnId+'"]';
+                document.querySelectorAll(dataTarget).forEach(rotate => {
+                    rotate.getElementsByTagName('img')[0].style.transform = "rotate(0deg)";
+               });
+            }
+    });
+</script>
 
 </body>
 </html>
