@@ -1,11 +1,13 @@
 {% extends 'superuser_panel.html' %}
 
 {% block user %}
+<div class="lists border-primary">
     <h2>Przegląd Użytkownika</h2>
     <div class="user-info">
         <h4>Email: {{ user.email }}</h4>
     </div>
-
+</div> 
+<div class="lists border-primary">
     <div class="assigned-meters">
         <h3>Przypisane liczniki</h3>
         <input type="text" id="search-meter-input-assigned" placeholder="Numer radiowy">
@@ -15,6 +17,7 @@
             {% endfor %}
         </ul>
     </div>
+</div>
 
     <script>
 function confirmDelete(meterId) {

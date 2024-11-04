@@ -9,18 +9,27 @@
 {% block content %}
     <h2>Panel Administratora zasobów</h2>
     <div class="content-box">
-        <div class="left-box" style="width: 25%">
-            <h3>Lista Twoich zasobów</h3>
-            <input type="text" id="search-user-input" placeholder="Wyszukaj użytkownika" class="search-bar">
-            <ul class="user-list limited-list" style="width: 320px" id="user-list">
-                {% for user in users %}
-                    <li class="user-item">
-                        <a href="{{ url_for('main_routes.superuser_user_overview', user_id=user.id) }}">{{ user.email }}</a>
-                    </li>
-                {% endfor %}
-            </ul>
+        <div class="left-box">
+            <div class="lists">
+                <button type="submit" class="btn btn-primary btn-toggle" data-target="userListCollapse">
+                    <h4>Lista Twoich zasobów</h4>
+                    <img src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+                </button>
+                    <div class="collapse"  id="userListCollapse" style="display: block;">
+                        <input type="text" id="search-user-input" placeholder="Wyszukaj użytkownika" class="search-bar">
+                        <ul class="user-list limited-list" style="width: 320px" id="user-list">
+                            {% for user in users %}
+                                <li class="user-item">
+                                    <a href="{{ url_for('main_routes.superuser_user_overview', user_id=user.id) }}">{{ user.email }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+            </div>
+            
+            
         </div>
-        <div class="right-box user-overview-container">
+        <div class="right-box user-overview-container" style="display: flex;">
         {% block user %}
         {% endblock user %}
 
@@ -28,10 +37,10 @@
         <h3>Instrukcja obsługi strony</h3>
         <p>Tutaj znajdziesz opis funkcji dostępnych w pasku nawigacyjnym:</p>
         <ul class="instructions-list">
-            <li><a href="{{ url_for('main_routes.generate_report') }}" class="btn btn-warning">Generuj raport</a> - pozwala na generowanie raportów z danych.</li>
-            <li><a href="{{ url_for('main_routes.superuser_panel') }} " class="btn btn-warning">Panel Zarządzania</a> - dostęp do panelu zarządzania użytkownikami i danymi.</li>
-            <li><a href="{{ url_for('main_routes.edit_account') }}" class="btn btn-warning">Edytuj profil</a> - pozwala na edycję danych Twojego konta.</li>
-            <li><a href="{{ url_for('main_routes.logout') }}" class="btn btn-warning">Wyloguj</a> - wylogowuje z systemu.</li>
+            <li><a href="{{ url_for('main_routes.generate_report') }}" class="btn btn-primary">Generuj raport</a> - pozwala na generowanie raportów z danych.</li>
+            <li><a href="{{ url_for('main_routes.superuser_panel') }} " class="btn btn-primary">Panel Zarządzania</a> - dostęp do panelu zarządzania użytkownikami i danymi.</li>
+            <li><a href="{{ url_for('main_routes.edit_account') }}" class="btn btn-primary">Edytuj profil</a> - pozwala na edycję danych Twojego konta.</li>
+            <li><a href="{{ url_for('main_routes.logout') }}" class="btn btn-primary">Wyloguj</a> - wylogowuje z systemu.</li>
         </ul>
         {% endblock instructions %}
     </div>

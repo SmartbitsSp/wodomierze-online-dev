@@ -8,93 +8,170 @@
 
 {% block content %}
 
-<button class="btn btn-secondary no-print" onclick="goBack()">Powrót</button>
-
 <h2>Szczegóły licznika</h2>
-    <a href="{{ url_for('main_routes.meter_history', meter_id=meter.id) }}" class="btn btn-info no-print">Wyświetl historię</a>
 
-    {% if current_user.is_admin %}
-    <a href="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}" class="btn btn-primary no-print">Edytuj licznik</a>
-{% endif %}
-<p>Numer radiowy: {{ meter.radio_number }}</p>
-<p>Numer licznika: {{ meter.device_number }}</p>
-{% if meter.address %}
-    <p>Adres: {% if meter.address.city != None %} {{ meter.address.city }},{% endif %} {% if meter.address.street != None %} Ul.{{ meter.address.street }} {{ meter.address.building_number }} {% if meter.address.apartment_number %} {% if meter.address.apartment_number != None %}/{{ meter.address.apartment_number }}
-    {% endif %} {% endif %} {% endif %}
-    <button id="add-address-button" class="btn btn-primary no-print">Edytuj adres</button>
-    </p>
-{% else %}
-    <p>Brak przypisanego adresu.
-    <button id="add-address-button" class="btn btn-primary no-print">Dodaj adres</button>
-    </p>
-{% endif %}
-    <form id="address-form" style="max-width: 400px" class="hidden" method="post" action="{{ url_for('main_routes.update_meter_address', meter_id=meter.id) }}">
-    <label for="city">Miasto:</label>
-    <input type="text" id="city" name="city" class="address-input" value="{{ meter.address.city }}">
+<div class="content-box">
+    <div id="forms">
+        <div id="buttons">
+            <button class="btn btn-secondary no-print left" onclick="goBack()">Powrót</button>
+            {% if current_user.is_admin %}
+                <form method="post" action="{{ url_for('main_routes.delete_meter', meter_id=meter.id) }}">
+                    <button type="submit" class="btn btn-danger no-print" onclick="return confirm('Czy na pewno chcesz usunąć ten licznik?')">Usuń licznik</button>
+                </form>
+                <form method="post" action="{{ url_for('main_routes.clear_readings', meter_id=meter.id) }}">
+                    <button type="submit" class="btn btn-warning no-print" onclick="return confirm('Czy na pewno chcesz wyczyścić odczyty tego licznika?')">Wyczyść licznik</button>
+                </form>
+            {% endif %}
+            {% if meter.address %}
+                <p><button id="add-address-button" class="btn btn-primary no-print">Edytuj adres</button></p>
+            {% else %}
+                <p><button id="add-address-button" class="btn btn-primary no-print">Dodaj adres</button></p>
+            {% endif %}
 
-    <label for="street">Ulica:</label>
-    <input type="text" id="street" name="street" class="address-input" value="{{ meter.address.street }}">
+        </div>
+        <form id="address-form" style="max-width: 400px" class="hidden border-primary" method="post" action="{{ url_for('main_routes.update_meter_address', meter_id=meter.id) }}">
+            <label for="city">Miasto:</label>
+            <input type="text" id="city" name="city" class="address-input" value="{{ meter.address.city }}">
+        
+            <label for="street">Ulica:</label>
+            <input type="text" id="street" name="street" class="address-input" value="{{ meter.address.street }}">
+        
+            <label for="building_number">Numer klatki:</label>
+            <input type="text" id="building_number" name="building_number" class="address-input" value="{{ meter.address.building_number }}">
+        
+            <label for="apartment_number">Numer mieszkania:</label>
+            <input type="text" id="apartment_number" name="apartment_number" class="address-input" value="{{ meter.address.apartment_number }}">
+        
+            <label for="postal_code">Kod pocztowy:</label>
+            <input type="text" id="postal_code" name="postal_code" class="address-input" value="{{ meter.address.postal_code }}">
+        
+            <button type="submit" class="btn btn-primary">Zapisz adres</button>
+        </form>
 
-    <label for="building_number">Numer klatki:</label>
-    <input type="text" id="building_number" name="building_number" class="address-input" value="{{ meter.address.building_number }}">
-
-    <label for="apartment_number">Numer mieszkania:</label>
-    <input type="text" id="apartment_number" name="apartment_number" class="address-input" value="{{ meter.address.apartment_number }}">
-
-    <label for="postal_code">Kod pocztowy:</label>
-    <input type="text" id="postal_code" name="postal_code" class="address-input" value="{{ meter.address.postal_code }}">
-
-    <button type="submit" class="btn btn-primary">Zapisz adres</button>
-</form>
-{% if current_user == meter.user %}
-<p id="meter-name" class="editable">nazwa: {{ meter.name }}
-<form id="edit-form" class="hidden" method="post" action="{{ url_for('main_routes.update_meter_name', meter_id=meter.id) }}">
-    <div class="form-group">
-        <label for="new-name">Nowa nazwa:</label>
-        <input type="text" id="new-name" name="new_name" value="{{ meter.name }}">
     </div>
-    <button type="submit" class="btn btn-primary">Aktualizuj</button>
-</form>
-<button id="edit-button" class="btn btn-primary">Zmień nazwę</button>
+    <div class="right-box" style="grid-template-columns: 1fr 1fr;">
+        <div>
+            <div class="lists">
+                <button type="submit" class="btn btn-primary btn-toggle no-print" data-target="meterData">
+                    <h4 class="no-print">Dane licznika</h4>
+                    <img class="no-print" src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+                </button>
+                <div class="collapse"  id="meterData" style="display: block;">
+                    <p>Numer radiowy: {{ meter.radio_number }}</p>
+                    <p>Numer licznika: {{ meter.device_number }}</p>
+                    {% if meter.address %}
+                        <p>Adres: {% if meter.address.city != None %} {{ meter.address.city }},{% endif %} {% if meter.address.street != None %} Ul.{{ meter.address.street }} {{ meter.address.building_number }} {% if meter.address.apartment_number %} {% if meter.address.apartment_number != None %}/{{ meter.address.apartment_number }}
+                        {% endif %} {% endif %} {% endif %}
+                    </p>
+                    {% else %}
+                        <p>Brak przypisanego adresu.
+                        </p>
+                    {% endif %}
+                    {% if current_user == meter.user %}
+                    <p id="meter-name" class="editable">nazwa: {{ meter.name }}
+                    <form id="edit-form" class="hidden" method="post" action="{{ url_for('main_routes.update_meter_name', meter_id=meter.id) }}">
+                        <div class="form-group">
+                            <label for="new-name">Nowa nazwa:</label>
+                            <input type="text" id="new-name" name="new_name" value="{{ meter.name }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Aktualizuj</button>
+                    </form>
+                    <button id="edit-button" class="btn btn-primary">Zmień nazwę</button>
+                    
+                    {% endif %}
+                    <p>Typ: {% if meter.type == "water" %}wodomierz{% elif meter.type == "heat" %}ciepłomierz{% endif %}</p>
+                    {% if current_user.is_admin %}
+                    <p>Przypisany do użytkownika:
+                
+                    {% if meter.user %}
+                    <a href="{{ url_for('main_routes.user_overview', user_id=user.id) }}">{{ user.email }}</a>
+                    {% else %}
+                    Brak przypisanego użytkownika.
+                    {% endif %}
+                    </p>
+                    {% endif %}
+                    {% if meter.is_main_meter %}
+                    <div>
+                        <h3>Suma ostatnich odczytów z liczników podrzędnych: <span style="background-color: {{ background_color }};">{{ total_sum }}</span></h3>
+                        <button id="toggle-sub-meters" class="btn btn-primary no-print">Pokaż listę powiązanych liczników</button>
+                        <div id="sub-meters-list" style="display: none;">
+                            <h3>Powiązane liczniki</h3>
+                            <ul>
+                                {% for sub_meter in sub_meters %}
+                                <li>
+                                    <a href="{{ url_for('main_routes.meter_details', meter_id=sub_meter.id) }}">{{ sub_meter.radio_number }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p>Przypisany do licznika głównego: {% if meter.main_meter %}<a href="{{ url_for('main_routes.meter_details', meter_id=meter.main_meter.id) }}">{{ meter.main_meter.radio_number }}</a>{% else %}Brak{% endif %}</p>
+                    {% endif %}
+                    <a href="{{ url_for('main_routes.meter_history', meter_id=meter.id) }}" class="btn btn-info no-print">Wyświetl historię</a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('main_routes.edit_meter', meter_id=meter.id) }}" class="btn btn-primary no-print">Edytuj licznik</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="lists">
+                <button type="submit" class="btn btn-primary btn-toggle no-print" data-target="meterReadings">
+                    <h4 class="no-print">Odczyty</h4>
+                    <img class="no-print" src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+                </button>
+                <div class="collapse"  id="meterReadings" style="display: none;">
+                    <h3 class="no-print">Odczyty</h3>
+                    <form class="no-print">
+                        <div class="form-group">
+                            <label for="start-date">Zakres dat:</label>
+                            <input type="date" id="start-date"> to <input type="date" id="end-date">
+                            <button class="btn btn-primary" type="button" id="update-chart">Aktualizuj</button>
+                            <button class="btn btn-primary" onClick="window.location.reload();">Resetuj</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="lists">
+                <button type="submit" class="btn btn-primary btn-toggle" data-target="meterTable">
+                    <h4 class="no-print">Tabela odczytów</h4>
+                    <img class="no-print" src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+                </button>
+                <div class="collapse"  id="meterTable" style="display: none;">
+                    <div style="display: flex;">
+                        <button id="export-csv-button" class="btn btn-primary no-print">Wyeksportuj do CSV</button>
+                        <button id="print-pdf-button" class="btn btn-primary no-print" onclick="window.print()">Drukuj to PDF</button>
+                    </div>
+                    <div id="table-container"></div>
+                </div>
+            </div>
+        </div>
+        <div style="display: none;">
+            <div class="lists">
+                <button type="submit" class="btn btn-primary btn-toggle" data-target="meterGraph">
+                    <h4 class="no-print">Tabela odczytów</h4>
+                    <img class="no-print" src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+                </button>
+                <div class="collapse"  id="meterGraph" style="display: none;">
+                    <button id="line-chart-button" class="no-print" onclick="showChart('line')">wykres liniowy</button>
+                    <button id="bar-chart-button" class="no-print" onclick="showChart('bar')">wykres słupkowy</button>
+                    <button id="table-button" class="no-print" onclick="showTable()">tabela</button>
 
-{% endif %}
-<p>Typ: {% if meter.type == "water" %}wodomierz{% elif meter.type == "heat" %}ciepłomierz{% endif %}</p>
-    {% if current_user.is_admin %}
-<th>Przypisany do użytkownika:</th>
-<td>
-    {% if meter.user %}
-    <a href="{{ url_for('main_routes.user_overview', user_id=user.id) }}">{{ user.email }}</a>
-    {% else %}
-    Brak przypisanego użytkownika.
-    {% endif %}
-</td>
-
-       <form method="post" action="{{ url_for('main_routes.delete_meter', meter_id=meter.id) }}">
-    <button type="submit" class="btn btn-danger no-print" onclick="return confirm('Czy na pewno chcesz usunąć ten licznik?')">Usuń licznik</button>
-</form>
-<form method="post" action="{{ url_for('main_routes.clear_readings', meter_id=meter.id) }}">
-    <button type="submit" class="btn btn-warning no-print" onclick="return confirm('Czy na pewno chcesz wyczyścić odczyty tego licznika?')">Wyczyść licznik</button>
-</form>
-{% endif %}
-
-    {% if meter.is_main_meter %}
-<div>
-<h3>Suma ostatnich odczytów z liczników podrzędnych: <span style="background-color: {{ background_color }};">{{ total_sum }}</span></h3>
-    <button id="toggle-sub-meters" class="btn btn-primary no-print">Pokaż listę powiązanych liczników</button>
-    <div id="sub-meters-list" style="display: none;">
-        <h3>Powiązane liczniki</h3>
-        <ul>
-            {% for sub_meter in sub_meters %}
-            <li>
-                <a href="{{ url_for('main_routes.meter_details', meter_id=sub_meter.id) }}">{{ sub_meter.radio_number }}</a>
-            </li>
-            {% endfor %}
-        </ul>
+                    <div id="chart-container" class="no-print"></div>
+                    <div id="table-container"></div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-{% else %}
-<p>Przypisany do licznika głównego: {% if meter.main_meter %}<a href="{{ url_for('main_routes.meter_details', meter_id=meter.main_meter.id) }}">{{ meter.main_meter.radio_number }}</a>{% else %}Brak{% endif %}</p>
-{% endif %}
+    
+    </div>
+    
+    
+        
+    
+    
+    
 
 <script>
 document.getElementById('toggle-sub-meters').addEventListener('click', function() {
@@ -109,26 +186,12 @@ document.getElementById('toggle-sub-meters').addEventListener('click', function(
     }
 });
 </script>
-<h3 class="no-print">Odczyty</h3>
-<form class="no-print">
-    <div class="form-group">
-        <label for="start-date">Zakres dat:</label>
-        <input type="date" id="start-date"> to <input type="date" id="end-date">
-        <button type="button" id="update-chart">Aktualizuj</button>
-        <button onClick="window.location.reload();">Resetuj</button>
-    </div>
-</form>
-<button id="export-csv-button" class="btn btn-primary no-print">Wyeksportuj do CSV</button>
-<button id="print-pdf-button" class="btn btn-primary no-print" onclick="window.print()">Drukuj to PDF</button>
+
+
 <br />
 <br />
 
-<button id="line-chart-button" class="no-print" onclick="showChart('line')">wykres liniowy</button>
-<button id="bar-chart-button" class="no-print" onclick="showChart('bar')">wykres słupkowy</button>
-<button id="table-button" class="no-print" onclick="showTable()">tabela</button>
 
-<div id="chart-container" class="no-print"></div>
-<div id="table-container"></div>
 
 
 

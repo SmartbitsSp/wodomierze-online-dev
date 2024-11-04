@@ -5,6 +5,7 @@
 {% endblock extra_css %}
 
 {% block content %}
+
     <button class="btn btn-secondary no-print" onclick="goBack()">Powrót</button>
     <script>function goBack() {
             window.history.back();
@@ -16,38 +17,55 @@
     <p>Użytkownicy w raporcie: {{ unique_emails | join(', ') }}</p>
 </div>
     <div class="report-actions no-print">
-    <button id="download-csv">Pobierz CSV</button>
-    <button id="download-json">Pobierz JSON</button>
-    <button id="print-pdf">Drukuj PDF</button>
+    <button class="btn btn-primary" id="download-csv">Pobierz CSV</button>
+    <button class="btn btn-primary" id="download-json">Pobierz JSON</button>
+    <button class="btn btn-primary" id="print-pdf">Drukuj PDF</button>
 </div>
 
 <div class="table-responsive report-table-container">
-<table class="report-table">
-    <tr>
-        <th>Email Użytkownika</th>
-        <th>Adres Licznika</th>
-        <th>Nr Radiowy</th>
-        <th>Nr Licznika</th>
-        <th>Typ Licznika</th>
-        <!-- Nagłówki dla miesięcy -->
-        {% for month_name in translated_month_names %}
-        <th>{{ month_name }}</th>
-        {% endfor %}
-    </tr>
+    {% set current_user = namespace(foo=None) %} 
+
     {% for data in report_data %}
-    <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
-        <td>{{ data.user_email }}</td>
-        <td>{{ data.meter_address }}</td>
-        <td>{{ data.meter_number }}</td>
-        <td>{{ data.device_number }}</td>
-        <td>{{ data.meter_type }}</td>
-        <!-- Dane dla każdego miesiąca -->
-        {% for month_name in translated_month_names %}
-        <td>{{ data[month_name] }}</td>
-        {% endfor %}
-    </tr>
+    {% if current_user.foo != data.user_email %}
+            {% if not loop.first %}
+                </table> <!-- Close the previous table if it's not the first iteration -->
+            {% endif %}
+            
+            <!-- Update the current user -->
+            {% set current_user.foo = data.user_email %}
+    
+            <!-- Display the user's email and meter type -->
+            <h3 class="user-line">{{ data.user_email }}</h3>
+            <h4>{{ data.meter_type }}</h4>
+    
+            <!-- Start a new table for the current user -->
+            <table class="report-table">
+                <tr>
+<!--                     <th class="no-print">Email Użytkownika</th> -->
+                    <th id="address">Adres Licznika</th>
+                    <th class="wide-cell">Nr Licznika</th>
+<!--                     <th class="no-print">Typ Licznika</th> -->
+                    <!-- Nagłówki dla miesięcy -->
+                    {% for month_name in translated_month_names %}
+                    <th>{{ month_name }}</th>
+                    {% endfor %}
+                </tr>
+        {% endif %}
+    
+        <!-- Always display the row for each entry -->
+        <tr class="{{ loop.cycle('odd-row', 'even-row') }}">
+<!--             <td class="no-print">{{ data.user_email }}</td> -->
+            <td>{{ data.meter_address }}</td>
+            <td>{{ data.device_number }}</td>
+<!--             <td class="no-print">{{ data.meter_type }}</td> -->
+            <!-- Dane dla każdego miesiąca -->
+            {% for month_name in translated_month_names %}
+            <td>{{ data[month_name]|replace('.', ',') }}</td>
+            {% endfor %}
+        </tr>
     {% endfor %}
-</table>
+    </table> <!-- Close the last table -->
+    
 </div>
 
 <script>

@@ -2,7 +2,7 @@
     max-width: 600px;
     margin: auto;
     padding: 20px;
-    background-color: #f9f9f9;
+    background-color: #DFDFDF;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -16,6 +16,8 @@
     padding: 8px;
     text-align: left;
     border-bottom: 1px solid #ddd;
+    background-color: #EFEFEF;
+
 }
 
 .table thead {

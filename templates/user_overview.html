@@ -7,57 +7,86 @@
 {% endblock extra_css %}
 
 {% block user %}
-
+<div>
+<div class="lists">
+    <button type="submit" class="btn btn-primary btn-toggle" data-target="userDataCollapse">
+        <h4>Dane użytkownika</h4>
+        <img src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+    </button>
     <!-- Informacje o użytkowniku -->
-    <div class="user-info">
-        <h4>Użytkownik: {{ user.email }}</h4>
-    <!-- Formularz edycji użytkownika -->
-<form method="POST" action="" id="editUserForm" style="display:none;">
-    {{ edit_user_form.hidden_tag() }}
-    <div class="form-group">
-        {{ edit_user_form.email.label }} {{ edit_user_form.email(class="form-control") }}
+    <div class="collapse" id="userDataCollapse" style="display: block;">
+        <ul class="limited-list"   id="meter-list">
+            <li id="user-email">{{ user.email }}</li>
+            <li>
+                {% if is_admin %}
+                    <h4 style="color: #177a6d;">Administrator</h4>
+                {% elif is_superuser %}
+                    <h4 style="color: #681919;">Superuser</h4>
+                {% elif user.superuser %}
+                <h6>Przypisany do:  <a href="{{ url_for('main_routes.user_overview', user_id=user.superuser.id) }}">{{ user.superuser.email }}</a></h6>
+                {% else %}
+                <h6>Użytkownik nie przypisany</a></h6>
+                {% endif %}
+            </li>
+            <li>
+                <h5>Notatki o użytkowniku</h5>
+                <div id="notes-display-field" class="border-primary">
+                    {% if user.notes and user.notes.strip() != '' %}
+                        {{ user.notes }}
+                    {% else %}
+                        <p>Brak notatek.</p>
+                    {% endif %}
+                </div>
+            </li>
+        </ul>
     </div>
-    <div class="form-group">
-        {{ edit_user_form.password.label }} {{ edit_user_form.password }}
-    </div>
-    <div class="form-group">
-        {{ edit_user_form.confirm_password.label }} {{ edit_user_form.confirm_password }}
-    </div>
+</div>
+<div class="lists">
+    <button type="submit" class="btn btn-primary btn-toggle" data-target="userEditCollapse">
+        <h4>Edytuj użytkownika</h4>
+        <img src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+    </button>
+    <div class="collapse" id="userEditCollapse" style="display: none;">
+        <!-- Formularz edycji użytkownika -->
+    <form method="POST" action="" id="editUserForm">
+        {{ edit_user_form.hidden_tag() }}
         <div class="form-group">
-        <label>{{ edit_user_form.report_months.label }}</label><br>
-        {% for value, label in edit_user_form.report_months.choices %}
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="month-{{ value }}" name="report_months[]" value="{{ value }}" {{ 'checked' if value in edit_user_form.report_months.data else '' }}>
-                <label class="form-check-label" for="month-{{ value }}">{{ label }}</label>
-            </div>
-        {% endfor %}
-    </div>
-
-    <div class="form-group">
-        {{ edit_user_form.can_toggle_view.label }} {{ edit_user_form.can_toggle_view() }}  <!-- Nowe pole -->
-    </div>
-
-    {{ edit_user_form.submit }}
-</form>
-<button id="editUserButton" class="btn btn-primary">Edytuj użytkownika</button>
-
-    {% if user.superuser %}
-        <h6>Przypisany do:  <a href="{{ url_for('main_routes.user_overview', user_id=user.superuser.id) }}">{{ user.superuser.email }}</a></h6>
-    {% endif %}
-    {% if is_superuser %}
-        <h4 style="color: #681919;">Superuser</h4>
-    {% endif %}
-    {% if is_admin %}
-        <h4 style="color: #177a6d;">Administrator</h4>
-    {% endif %}
-        <h5>Notatki o użytkowniku</h5>
-    <div id="notes-display-field">
-    {% if user.notes and user.notes.strip() != '' %}
-        {{ user.notes }}
+            {{ edit_user_form.email.label }} {{ edit_user_form.email(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ edit_user_form.password.label }} {{ edit_user_form.password }}
+        </div>
+        <div class="form-group">
+            {{ edit_user_form.confirm_password.label }} {{ edit_user_form.confirm_password }}
+        </div>
+            <div class="form-group">
+            <label>{{ edit_user_form.report_months.label }}</label><br>
+            {% for value, label in edit_user_form.report_months.choices %}
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="month-{{ value }}" name="report_months[]" value="{{ value }}" {{ 'checked' if value in edit_user_form.report_months.data else '' }}>
+                    <label class="form-check-label" for="month-{{ value }}">{{ label }}</label>
+                </div>
+            {% endfor %}
+        </div>
+    
+        <div class="form-group">
+            {{ edit_user_form.can_toggle_view.label }} {{ edit_user_form.can_toggle_view() }}  <!-- Nowe pole -->
+        </div>
+    
+        {{ edit_user_form.submit }}
+    </form>
+    <button id="edit-notes-button" class="btn btn-primary" >Edytuj notatki</button>
+    <button id="deleteUser" class="btn btn-danger">Usuń Użytkownika</button>
+    <!-- Przycisk dezaktywacji użytkownika -->
+    {% if user.is_active %}
+        <form method="POST" action="{{ url_for('main_routes.deactivate_user', user_id=user.id) }}" style="display: grid;">
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Czy na pewno chcesz dezaktywować to konto?')">Dezaktywuj Konto</button>
+        </form>
     {% else %}
-        <p>Brak notatek.</p>
+        <form method="POST" action="{{ url_for('main_routes.deactivate_user', user_id=user.id) }}" style="display: grid;">
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Czy na pewno chcesz aktywować to konto?')">Aktywuj Konto</button>
+        </form>
     {% endif %}
-        <button id="edit-notes-button" class="btn btn-secondary">Edytuj notatki</button>
     <form method="POST" id="notes-edit-field" style="display: none;">
         {{ user_notes_form.hidden_tag() }}
         <div class="form-group">
@@ -66,133 +95,151 @@
         </div>
         <button type="submit" class="btn btn-primary">Zapisz notatki</button>
     </form>
-    </div>
-<br>
-    <!-- Lista przypisanych liczników -->
-    <div class="assigned-meters">
-        <h3>Przypisane liczniki</h3>
-    <input type="text" id="search-meter-input-assigned" placeholder="Numer radiowy">
-        <ul class="meter-list limited-list" style="max-height: 200px; max-width: 400px" id="meter-list-assigned">
-        {% if is_superuser %}
-            {% for meter in assigned_meters %}
-            <li class="meter-item" style="width: 300px">{{ meter.radio_number }} - <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}">Szczegóły</a> | <button class="btn btn-danger" onclick="confirmDelete('{{ meter.id }}')">Usuń</button></li>
-        {% endfor %}
-        {% endif %}
-        {% if not is_superuser %}
-            {% for meter in user.meters %}
-                <li class="meter-item" style="width: 300px">{{ meter.radio_number }} - <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}">Szczegóły</a> | <button class="btn btn-danger" onclick="confirmDelete('{{ meter.id }}')">Usuń</button></li>
-            {% endfor %}
-        {% endif %}
-        </ul>
-    {% if user.is_superuser %}
-    <div class="assigned-users">
-        <h3>Przypisani użytkownicy</h3>
-        <input type="text" id="search-user-input" placeholder="Adres email">
-        <ul class="user-list limited-list" style="max-height: 200px; max-width: 400px" id="user-list">
-            {% for assigned_user in user.assigned_users %}
-                <li class="user-item" style="width: 300px">
-                    {{ assigned_user.email }} -
-                    <a href="{{ url_for('main_routes.user_overview', user_id=assigned_user.id) }}">Podejrzyj</a> |
-                    <a href="{{ url_for('main_routes.remove_assigned_user', user_id=assigned_user.id) }}" onclick="return confirm('Czy na pewno chcesz usunąć przypisanie tego użytkownika?')">Usuń</a>
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-{% endif %}
-    </div>
-
-    <!-- Formularz dodawania licznika -->
- <h3>Wolne liczniki</h3>
-
-    {% if successfully_assigned %}
-    <div class="alert alert-success" role="alert">
-        Przypisano następujące liczniki: {{ successfully_assigned|join(', ') }}
-    </div>
-{% endif %}
-
-    {% if not_assigned %}
-<div class="alert alert-warning">
-    <h4>Nieudane przypisania:</h4>
-    <ul>
-        {% for meter_number, reason in not_assigned %}
-        <li>{{ meter_number }} - {{ reason }}</li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
-
-{% if not_assigned %}
-    <div class="alert alert-danger" role="alert">
-        Nie udało się przypisać lub liczniki są już przypisane: {{ not_assigned|join(', ') }}
-    </div>
-{% endif %}
-    <h5>Dodaj liczniki (oddzielone przecinkami, spacjami lub enterami)</h5>
-<form method="POST" action="{{ url_for('main_routes.assign_meters_to_user', user_id=user.id) }}">
-    {{ user_form.hidden_tag() }}
-    <div class="form-group">
-        <textarea name="meter_list" class="form-control" rows="4" placeholder="Wprowadź numery radiowe liczników"></textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Przypisz liczniki</button>
-</form>
-<br />
-
-<input type="text" id="search-meter-input-2" placeholder="Numer radiowy">
-<ul class="user-list limited-list" style="width: 550px" id="meter-list-2">
-    {% for meter in unassigned_meters %}
-        <li class="meter-item" style="width: 150px">{{ meter.radio_number }} <a href="{{ url_for('main_routes.assign_meter', user_id=user.id, meter_id=meter.id) }}">Przypisz</a></li>
-    {% endfor %}
-</ul>
-
-    {% if is_superuser %}
-        <h4>Wolni użytkownicy:</h4>
-    <ul class="user-list">
-        {% for unassigned_user in unassigned_users %}
-            <li class="user-item">
-                {{ unassigned_user.email }}<form method="POST" action="{{ url_for('main_routes.assign_user_to_superuser', superuser_id=user.id, user_id=unassigned_user.id) }}">
-                    <button type="submit" class="btn btn-primary">Przypisz do Superusera</button>
-                </form>
-
-            </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-
-    <button class="btn btn-danger" onclick="showPasswordInput()">Usuń Użytkownika</button>
     <form id="deleteUserForm" method="POST" action="{{ url_for('main_routes.delete_user', user_id=user.id) }}" style="display: none;">
         <div class="form-group">
-            <label for="admin_password">Administrator Password</label>
+            <label for="admin_password">Hasło Administratora</label>
             <input type="password" name="admin_password" class="form-control" required>
         </div>
         <button type="submit" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć tego użytkownika?')">Usuń Użytkownika</button>
     </form>
     <br />
-     <!-- Przycisk dezaktywacji użytkownika -->
-    {% if user.is_active %}
-        <form method="POST" action="{{ url_for('main_routes.deactivate_user', user_id=user.id) }}">
-            <button type="submit" class="btn btn-warning" onclick="return confirm('Czy na pewno chcesz dezaktywować to konto?')">Dezaktywuj Konto</button>
-        </form>
-    {% else %}
-        <form method="POST" action="{{ url_for('main_routes.deactivate_user', user_id=user.id) }}">
-            <button type="submit" class="btn btn-success" onclick="return confirm('Czy na pewno chcesz aktywować to konto?')">Aktywuj Konto</button>
-        </form>
-    {% endif %}
     </div>
-    <script>
-document.getElementById('editUserButton').addEventListener('click', function() {
-    var form = document.getElementById('editUserForm');
-    if (form.style.display === "none") {
-        form.style.display = "block";
-    } else {
-        form.style.display = "none";
-    }
-});
-</script>
+</div>
+<br>
+</div>
+<div>
+
+    <div class="lists">
+        <!-- Lista przypisanych liczników -->
+        <button type="submit" class="btn btn-primary btn-toggle" data-target="assignedMeters">
+            <h4>Przypisane liczniki</h4>
+            <img src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+        </button>
+        <div class="collapse" id="assignedMeters" style="display: none;">
+            <input type="text" id="search-meter-input-assigned" placeholder="Numer radiowy">
+                <ul class="meter-list limited-list" style="max-width: 400px" id="meter-list-assigned">
+                {% if is_superuser %}
+                    {% for meter in assigned_meters %}
+                    <li class="meter-item">{{ meter.radio_number }} - <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}">Szczegóły</a> | <button class="btn btn-danger" onclick="confirmDelete('{{ meter.id }}')">Usuń</button></li>
+                {% endfor %}
+                {% endif %}
+                {% if not is_superuser %}
+                    {% for meter in user.meters %}
+                        <li class="meter-item">{{ meter.radio_number }} - <a href="{{ url_for('main_routes.meter_details', meter_id=meter.id) }}">Szczegóły</a> | <button class="btn btn-danger" onclick="confirmDelete('{{ meter.id }}')">Usuń</button></li>
+                    {% endfor %}
+                {% endif %}
+                </ul>
+            </div>
+        </div>
+        
+    {% if user.is_superuser %}
+    <div class="lists">
+        <!-- Lista przypisanych użytkowników -->
+        <button type="submit" class="btn btn-primary btn-toggle" data-target="assignedUsers">
+            <h4>Przypisani użytkownicy</h4>
+            <img src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+        </button>
+        <div class="collapse" id="assignedUsers" style="display: none;">
+            <input type="text" id="search-user-input" placeholder="Adres email">
+                <ul class="user-list limited-list" style="max-height: 200px; max-width: 400px" id="user-list">
+                    {% for assigned_user in user.assigned_users %}
+                        <li class="user-item" style="width: 300px">
+                            {{ assigned_user.email }} -
+                            <a href="{{ url_for('main_routes.user_overview', user_id=assigned_user.id) }}">Podejrzyj</a> |
+                            <a href="{{ url_for('main_routes.remove_assigned_user', user_id=assigned_user.id) }}" onclick="return confirm('Czy na pewno chcesz usunąć przypisanie tego użytkownika?')">Usuń</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<div>
+<div class="lists">
+    <!-- Formularz dodawania licznika -->
+    <button type="submit" class="btn btn-primary btn-toggle" data-target="assignMeters">
+        <h4>Wolne liczniki</h4>
+        <img src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+    </button>
+    <div class="collapse" id="assignMeters" style="display: none;">
+
+        {% if successfully_assigned %}
+        <div class="alert alert-success" role="alert">
+            Przypisano następujące liczniki: {{ successfully_assigned|join(', ') }}
+        </div>
+    {% endif %}
+    
+        {% if not_assigned %}
+    <div class="alert alert-warning">
+        <h4>Nieudane przypisania:</h4>
+        <ul>
+            {% for meter_number, reason in not_assigned %}
+            <li>{{ meter_number }} - {{ reason }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    {% if not_assigned %}
+        <div class="alert alert-danger" role="alert">
+            Nie udało się przypisać lub liczniki są już przypisane: {{ not_assigned|join(', ') }}
+        </div>
+    {% endif %}
+        <h5 style="padding: 5px;">Dodaj liczniki (oddzielone przecinkami, spacjami lub enterami)</h5>
+    <form method="POST" action="{{ url_for('main_routes.assign_meters_to_user', user_id=user.id) }}" style="display: grid;">
+        {{ user_form.hidden_tag() }}
+        <div class="form-group">
+            <textarea name="meter_list" class="form-control" rows="4" placeholder="Wprowadź numery radiowe liczników"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Przypisz liczniki</button>
+    </form>
+    <br />
+    
+    <input type="text" id="search-meter-input-2" placeholder="Numer radiowy">
+    <ul class="user-list limited-list" id="meter-list-2">
+        {% for meter in unassigned_meters %}
+            <li class="meter-item">{{ meter.radio_number }} <a href="{{ url_for('main_routes.assign_meter', user_id=user.id, meter_id=meter.id) }}">Przypisz</a></li>
+        {% endfor %}
+    </ul>
+    </div>
+</div>
+
+{% if is_superuser %}
+<div class="lists">
+    <button type="submit" class="btn btn-primary btn-toggle" data-target="assignUsers">
+        <h4>Wolni użytkownicy</h4>
+        <img src="{{ url_for('static', filename='img/arrow.png') }}" alt="arrow"/>
+    </button>
+    <div class="collapse" id="assignUsers" style="display: none;">
+        <ul class="user-list">
+            {% for unassigned_user in unassigned_users %}
+                <li class="user-item">
+                    {{ unassigned_user.email }}<form method="POST" action="{{ url_for('main_routes.assign_user_to_superuser', superuser_id=user.id, user_id=unassigned_user.id) }}">
+                        <button type="submit" class="btn btn-primary">Przypisz do Superusera</button>
+                    </form>
+    
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+</div>
+
 
     <script>
-        function showPasswordInput() {
-            const deleteUserForm = document.getElementById('deleteUserForm');
-            deleteUserForm.style.display = 'block';
-        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteUserButton = document.getElementById('deleteUser');
+            const deleteUserField = document.getElementById('deleteUserForm');
+    
+            deleteUserButton.addEventListener('click', function () {
+                if (deleteUserField.style.display === 'none') {
+                    deleteUserField.style.display = 'grid';
+                } else {
+                    deleteUserField.style.display = 'none';
+                }
+            });
+        });
     </script>
 
     <script>
@@ -264,7 +311,7 @@ function confirmDelete(meterId) {
 
         editNotesButton.addEventListener('click', function () {
             if (notesEditField.style.display === 'none') {
-                notesEditField.style.display = 'block';
+                notesEditField.style.display = 'grid';
             } else {
                 notesEditField.style.display = 'none';
             }
@@ -272,7 +319,23 @@ function confirmDelete(meterId) {
     });
 </script>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var element = document.getElementById("admin-panel");
+        if (element) {
+            element.classList.remove("init-display");
+            element.classList.add("left-box");
+        }
+    });
+</script>
 
-
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var element = document.getElementsByClassName('right-box')[0];
+        if (element) {
+            element.style.display = "grid";
+        }
+    });
+</script>
 
 {% endblock %}
