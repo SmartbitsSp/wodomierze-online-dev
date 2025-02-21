@@ -9,7 +9,7 @@ class Config(object):
     DB_USER = os.environ.get('DB_USER') # database user name stored as env variable in Azure application setting
     DB_PASS = os.environ.get('DB_PASS') # database password stored as env variable in Azure application setting
     DB_SERVER = os.environ.get('DB_SERVER', 'wodomierze-online.database.windows.net')
-    DB_NAME = os.environ.get('DB_NAME', 'smbts-wodomierze-online')
+    DB_NAME = os.environ.get('DB_NAME', 'smbts-wodomierze-online-dev')
     SQLALCHEMY_DATABASE_URI = f'mssql+pyodbc://{DB_USER}:{DB_PASS}@{DB_SERVER}/{DB_NAME}?driver=ODBC+Driver+18+for+SQL+Server' #connection string for SQL server provided by SQL server
 
     # EMITEL_USER = os.environ.get('DB_USER')
